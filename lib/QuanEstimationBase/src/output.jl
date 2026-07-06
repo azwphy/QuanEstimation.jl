@@ -137,7 +137,7 @@ function SaveFile(output::Output{no_save}, suffix::AbstractString = ".dat")
         jldopen(tmp, "w") do f
             f[file] = res
         end
-        mv(tmp, file * suffix; force=true)
+        mv(tmp, file * suffix; force = true)
 
         # # CSV save   
         # df = DataFrame(res = res)
@@ -177,7 +177,7 @@ function SaveCurrent(output::Output{savefile}, suffix::AbstractString = ".dat")
         jldopen(tmp, "w") do f
             f[file] = append!(fs, [res])
         end
-        mv(tmp, target; force=true)
+        mv(tmp, target; force = true)
     end
 end
 
@@ -225,5 +225,5 @@ function SaveReward(rewards)
     # JLD2 save
     open("reward.csv", "w") do r
         writedlm(r, rewards)
-    end    
+    end
 end

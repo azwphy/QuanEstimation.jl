@@ -32,19 +32,19 @@ end
 y = []
 
 x_real = 0.2 * π
-    
+
 H0_real = H0_func(x_real)
 dH_real = dH_func(x_real)
 rho_real, drho_real = QuanEstimation.expm(tspan, rho0, H0_real, dH_real)
 rho_real = rho_real[end]
 
 p1 = real(tr(M[1]*rho_real))
-    
-for i in 1:2500
+
+for i = 1:2500
     if rand() < p1
-            push!(y, 0)
+        push!(y, 0)
     else
-            push!(y, 1)
+        push!(y, 1)
     end
 end
 

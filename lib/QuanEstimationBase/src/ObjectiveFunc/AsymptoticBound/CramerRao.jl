@@ -99,7 +99,12 @@ Given ``\bar{L}``, the pullback computes:
 
 - [`SLD`](@ref): Forward SLD computation.
 raw"""
-function ChainRulesCore.rrule(::typeof(SLD), ρ::Matrix{T}, dρ::Matrix{T}; eps = GLOBAL_EPS) where {T<:Complex}
+function ChainRulesCore.rrule(
+    ::typeof(SLD),
+    ρ::Matrix{T},
+    dρ::Matrix{T};
+    eps = GLOBAL_EPS,
+) where {T<:Complex}
     L = SLD(ρ, dρ; eps = eps)
     function SLD_pullback(L̄)
         Ḡ = SLD(Array(ρ), Matrix{ComplexF64}(L̄) / 2)
@@ -143,7 +148,8 @@ is inverted via `pinv` with relative tolerance `eps`.
 - [`SLD_qr`](@ref): Liouville-space SLD via QR decomposition.
 """
 function SLD_liouville(ρ::Matrix{T}, ∂ρ_∂x::Matrix{T}; eps = GLOBAL_EPS) where {T<:Complex}
-    2 * pinv(kron(ρ |> transpose, ρ |> one) + kron(ρ |> one, ρ), rtol = eps) * vec(∂ρ_∂x) |> vec2mat
+    2 * pinv(kron(ρ |> transpose, ρ |> one) + kron(ρ |> one, ρ), rtol = eps) * vec(∂ρ_∂x) |>
+    vec2mat
 end
 
 """
@@ -206,7 +212,8 @@ Same Liouville-space equation as [`SLD_liouville`](@ref):
 - [`SLD`](@ref): Standard SLD via eigenbasis decomposition.
 raw"""
 function SLD_qr(ρ::Matrix{T}, ∂ρ_∂x::Matrix{T}) where {T<:Complex}
-    2 * (qr(kron(ρ |> transpose, ρ |> one) + kron(ρ |> one, ρ), ColumnNorm()) \ vec(∂ρ_∂x)) |>
+    2 *
+    (qr(kron(ρ |> transpose, ρ |> one) + kron(ρ |> one, ρ), ColumnNorm()) \ vec(∂ρ_∂x)) |>
     vec2mat
 end
 
@@ -510,7 +517,10 @@ raw"""
 function QFIM_SLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = GLOBAL_EPS) where {T<:Complex}
     p_num = length(dρ)
     LD_tp = (x -> SLD(ρ, x; eps = eps)).(dρ)
-    return [real(tr(0.5 * ρ * (LD_tp[i] * LD_tp[j] + LD_tp[j] * LD_tp[i]))) for i in 1:p_num, j in 1:p_num]
+    return [
+        real(tr(0.5 * ρ * (LD_tp[i] * LD_tp[j] + LD_tp[j] * LD_tp[i]))) for
+        i = 1:p_num, j = 1:p_num
+    ]
 end
 
 @doc raw"""
@@ -550,7 +560,7 @@ raw"""
 function QFIM_RLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = GLOBAL_EPS) where {T<:Complex}
     p_num = length(dρ)
     R = RLD(ρ, dρ; eps = eps)
-    return [tr(ρ * R[i] * R[j]') for i in 1:p_num, j in 1:p_num]
+    return [tr(ρ * R[i] * R[j]') for i = 1:p_num, j = 1:p_num]
 end
 
 @doc raw"""
@@ -590,7 +600,7 @@ raw"""
 function QFIM_LLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = GLOBAL_EPS) where {T<:Complex}
     p_num = length(dρ)
     L = LLD(ρ, dρ; eps = eps)
-    return [tr(ρ * L[i]' * L[j]) for i in 1:p_num, j in 1:p_num]
+    return [tr(ρ * L[i]' * L[j]) for i = 1:p_num, j = 1:p_num]
 end
 
 @doc raw"""
@@ -631,7 +641,9 @@ which is valid for pure states, then the symmetric trace formula is used.
 function QFIM_pure(ρ::Matrix{T}, ∂ρ_∂x::Vector{Matrix{T}}) where {T<:Complex}
     p_num = length(∂ρ_∂x)
     sld = [2 * ∂ρ_∂x[i] for i = 1:p_num]
-    return [real(tr(0.5 * ρ * (sld[i] * sld[j] + sld[j] * sld[i]))) for i in 1:p_num, j in 1:p_num]
+    return [
+        real(tr(0.5 * ρ * (sld[i] * sld[j] + sld[j] * sld[i]))) for i = 1:p_num, j = 1:p_num
+    ]
 end
 
 #======================================================#
@@ -979,8 +991,8 @@ function QFIM_Bloch(r, dr; eps = GLOBAL_EPS)
     else
         rho = (Matrix(I, dim, dim) + sqrt(dim * (dim - 1) / 2) * r' * Lambda) / dim
         G = zeros(ComplexF64, dim^2 - 1, dim^2 - 1)
-        for row_i = 1:dim^2-1
-            for col_j = row_i:dim^2-1
+        for row_i = 1:(dim^2-1)
+            for col_j = row_i:(dim^2-1)
                 anti_commu = Lambda[row_i] * Lambda[col_j] + Lambda[col_j] * Lambda[row_i]
                 G[row_i, col_j] = 0.5 * tr(rho * anti_commu)
                 G[col_j, row_i] = G[row_i, col_j]
@@ -1149,11 +1161,13 @@ function Williamson_form(A::AbstractMatrix)
     J = zeros(n, n) |> x -> [x one(x); -one(x) x]
     A_sqrt = sqrt(A)
     B = A_sqrt * J * A_sqrt
-    P = one(A) |> x -> [x[:, 1:2:2n-1] x[:, 2:2:2n]]
+    P = one(A) |> x -> [x[:, 1:2:(2n-1)] x[:, 2:2:2n]]
     t, Q, vals = schur(B)
-    c = sort(filter(x -> imag(x) > 0, vals); by=imag) .|> imag
-    D = c |> diagm |>complex |> x -> x^(-0.5)
-    S = (J * A_sqrt * Q * P * [zeros(n, n) -D; D zeros(n, n)] |> transpose |> inv) * transpose(P)
+    c = sort(filter(x -> imag(x) > 0, vals); by = imag) .|> imag
+    D = c |> diagm |> complex |> x -> x^(-0.5)
+    S =
+        (J * A_sqrt * Q * P * [zeros(n, n) -D; D zeros(n, n)] |> transpose |> inv) *
+        transpose(P)
     return S, c
 end
 
@@ -1273,14 +1287,15 @@ function QFIM_Gauss(R̄::V, dR̄::VV, D::M, dD::VM) where {V,VV,M,VM<:AbstractVe
     quad_num = length(R̄)
     C = [D[i, j] - R̄[i]R̄[j] for i = 1:quad_num, j = 1:quad_num]
     dC = [
-        [dD[k][i, j] - dR̄[k][i]R̄[j] - R̄[i]dR̄[k][j] for i = 1:quad_num, j = 1:quad_num] for k = 1:para_num
+        [dD[k][i, j] - dR̄[k][i]R̄[j] - R̄[i]dR̄[k][j] for i = 1:quad_num, j = 1:quad_num]
+        for k = 1:para_num
     ]
 
     S, cs = Williamson_form(C)
     Gs = G_Gauss(S, dC, cs)
     F = [
-        tr(Gs[i] * dC[j]) + transpose(dR̄[i]) * inv(C) * dR̄[j] for i = 1:para_num,
-        j = 1:para_num
+        tr(Gs[i] * dC[j]) + transpose(dR̄[i]) * inv(C) * dR̄[j] for
+        i = 1:para_num, j = 1:para_num
     ]
 
     if para_num == 1

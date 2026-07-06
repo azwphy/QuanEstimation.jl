@@ -1,28 +1,30 @@
 using LinearAlgebra
 using Test
-using QuanEstimationBase: 
-    QFIM,       
+using QuanEstimationBase:
+    QFIM,
     CFIM,
     QFIM_RLD,
     QFIM_LLD,
     QFIM_pure,
-    FIM,       
+    FIM,
     HCRB,
-    NHB,        
-    SLD,         
-    SLD_liouville,  
-    SLD_qr,  
+    NHB,
+    SLD,
+    SLD_liouville,
+    SLD_qr,
     RLD,
-    LLD,   
-    expm,       
-    basis,       
+    LLD,
+    expm,
+    basis,
     SIC,
     Kraus,
     Lindblad,
     GeneralScheme,
     evolve,
     Hamiltonian,
-    SigmaX, SigmaY, SigmaZ,
+    SigmaX,
+    SigmaY,
+    SigmaZ,
     PlusState,
     QFIM_Bloch,
     QFIM_Gauss,
@@ -32,7 +34,7 @@ using QuanEstimationBase:
 function test_cramer_rao_bound_single_param()
     (; tspan, rho0, H0, dH, Hc, decay, ctrl, M) = generate_qubit_dynamics()
 
-    rho, drho = expm(tspan, rho0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
+    rho, drho = expm(tspan, rho0, H0, dH; decay = decay, Hc = Hc, ctrl = ctrl)
     # calculation of the CFI and QFI
     Im, F, H = Float64[], Float64[], Float64[]
     for ti = 2:length(tspan)
@@ -49,7 +51,7 @@ function test_cramer_rao_bound_multi_param()
     (; tspan, psi, H0, dH, decay) = generate_LMG2_dynamics()
 
     rho0 = psi * psi'
-    rho, drho = expm(tspan, rho0, H0, dH; decay=decay)
+    rho, drho = expm(tspan, rho0, H0, dH; decay = decay)
     Im, F, H = Matrix{Float64}[], Matrix{Float64}[], Float64[]
     for ti = 2:length(tspan)
         I_tp = CFIM(rho[ti], drho[ti], SIC(3))
@@ -59,7 +61,7 @@ function test_cramer_rao_bound_multi_param()
         H_tp = HCRB(rho[ti], drho[ti], I(2))
         push!(H, H_tp)
     end
-    SLD(rho[end], drho[end]; rep="eigen")
+    SLD(rho[end], drho[end]; rep = "eigen")
     SLD_liouville(rho[end], drho[end])
     SLD_qr(rho[end], drho[end][1])
     RLD(rho[end], drho[end])
@@ -80,13 +82,13 @@ end
 
 function test_bounds_with_scheme()
     H0(u) = (SigmaX() * cos(u) + SigmaZ() * sin(u))/2
-    dH(u) = [(-SigmaX() * sin(u) + SigmaZ() * cos(u))/2] 
+    dH(u) = [(-SigmaX() * sin(u) + SigmaZ() * cos(u))/2]
     ham = Hamiltonian(H0, dH, pi/4)
-    dynamics = Lindblad(ham,0:0.01:1,[SigmaY()],[[SigmaZ(), 0.01]]) 
-    scheme = GeneralScheme(; probe=PlusState(), param=dynamics, measurement = SIC(2)) 
+    dynamics = Lindblad(ham, 0:0.01:1, [SigmaY()], [[SigmaZ(), 0.01]])
+    scheme = GeneralScheme(; probe = PlusState(), param = dynamics, measurement = SIC(2))
 
-    @test all(eigen(QFIM(scheme; LDtype=:SLD)).values .>= 0)
-    @test all(eigen(CFIM(scheme)).values .>= 0) 
+    @test all(eigen(QFIM(scheme; LDtype = :SLD)).values .>= 0)
+    @test all(eigen(CFIM(scheme)).values .>= 0)
     @test HCRB(scheme) >= 0
     @test NHB(scheme) >= 0
 end  # function test_bounds_with_scheme
@@ -103,18 +105,18 @@ end  # function test_cramer_rao_bound_kraus
 
 function test_qfim_bloch()
     r1 = ones(3)/sqrt(3)
-    dr1 = [[0.0,1.0,0.0]]
+    dr1 = [[0.0, 1.0, 0.0]]
     @test QFIM_Bloch(r1, dr1) ≈ 1
-    r2  = ones(8)/sqrt(8)
-    dr2 = [[0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0]]
+    r2 = ones(8)/sqrt(8)
+    dr2 = [[0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
     @test QFIM_Bloch(r2, dr2) > 0
 end  # function test_qfim_bloch
 
 function test_qfim_gauss()
-    R =  [1.0,0.0,1.0,0.0]
+    R = [1.0, 0.0, 1.0, 0.0]
     dR = [zero(R)]
-    D = [2.0 0 1 0;0 1 0 0;1 0 2 0;0 0 0 1]
-    dD=[zeros(4,4)]
+    D = [2.0 0 1 0; 0 1 0 0; 1 0 2 0; 0 0 0 1]
+    dD=[zeros(4, 4)]
     @test QFIM_Gauss(R, dR, D, dD) ≈ 0
 end  # function test_qfim_gauss
 
@@ -129,15 +131,15 @@ end  # function test_fim
 function test_sld_bad_rep()
     rho = ComplexF64[0.6 0.0; 0.0 0.4]
     drho = ComplexF64[0.1 0.05; 0.05 -0.1]
-    @test_throws ArgumentError SLD(rho, [drho]; rep="bad")
+    @test_throws ArgumentError SLD(rho, [drho]; rep = "bad")
 end
 
 function test_qfim_scheme_rld_lld()
     scheme = generate_qubit_scheme()
     # QFIM with RLD/LLD via Scheme
-    F_rld = QFIM(scheme; LDtype=:RLD)
-    F_lld = QFIM(scheme; LDtype=:LLD)
-    @test isapprox(F_rld, F_lld, rtol=1e-10)
+    F_rld = QFIM(scheme; LDtype = :RLD)
+    F_lld = QFIM(scheme; LDtype = :LLD)
+    @test isapprox(F_rld, F_lld, rtol = 1e-10)
     @test all(isfinite.(F_rld))
     @test all(isfinite.(F_lld))
 end
@@ -164,7 +166,7 @@ end
 function test_qfim_full_trajectory()
     scheme = generate_qubit_scheme()
     (; tspan) = generate_qubit_dynamics()
-    F_traj = QFIM(scheme; full_trajectory=true)
+    F_traj = QFIM(scheme; full_trajectory = true)
     @test F_traj isa Vector
     @test length(F_traj) == length(tspan)
     @test all(F -> all(isfinite, F), F_traj)
@@ -172,9 +174,9 @@ end
 
 function test_cfim_full_trajectory()
     (; tspan, rho0, H0, dH, decay, M) = generate_qubit_dynamics()
-    dynamics = Lindblad(H0, dH, tspan, decay; dyn_method=:Expm)
-    scheme = GeneralScheme(; probe=rho0, param=dynamics, measurement=M)
-    C_traj = CFIM(scheme; full_trajectory=true)
+    dynamics = Lindblad(H0, dH, tspan, decay; dyn_method = :Expm)
+    scheme = GeneralScheme(; probe = rho0, param = dynamics, measurement = M)
+    C_traj = CFIM(scheme; full_trajectory = true)
     @test C_traj isa Vector
     @test length(C_traj) == length(tspan)
 end
@@ -183,33 +185,61 @@ function test_fi_expt()
     y1 = randn(100) .+ 0.0
     y2 = randn(100) .+ 0.1
     dx = abs(sum(y1) / length(y1) - sum(y2) / length(y2))
-    F_norm = FI_Expt(y1, y2, dx; ftype=:norm)
+    F_norm = FI_Expt(y1, y2, dx; ftype = :norm)
     @test isfinite(F_norm)
     @test F_norm >= 0
 end
 
 function test_cramer_rao()
-    @testset "Single-parameter CR bounds" begin test_cramer_rao_bound_single_param() end
-    @testset "Multi-parameter CR bounds" begin test_cramer_rao_bound_multi_param() end
-    @testset "Kraus CR bounds" begin test_cramer_rao_bound_kraus() end
-    @testset "Bounds with scheme" begin test_bounds_with_scheme() end
-    @testset "QFIM Bloch" begin test_qfim_bloch() end
-    @testset "QFIM Gauss" begin test_qfim_gauss() end
-    @testset "FIM" begin test_fim() end
-    @testset "SLD bad rep" begin test_sld_bad_rep() end
-    @testset "QFIM scheme RLD/LLD" begin test_qfim_scheme_rld_lld() end
-    @testset "QFIM Bloch mixed state" begin test_qfim_bloch_mixed_state() end
-    @testset "QFIM Bloch multipara" begin test_qfim_bloch_multipara() end
-    @testset "QFIM full trajectory" begin test_qfim_full_trajectory() end
-    @testset "CFIM full trajectory" begin test_cfim_full_trajectory() end
-    @testset "FI Expt" begin test_fi_expt() end
+    @testset "Single-parameter CR bounds" begin
+        test_cramer_rao_bound_single_param()
+    end
+    @testset "Multi-parameter CR bounds" begin
+        test_cramer_rao_bound_multi_param()
+    end
+    @testset "Kraus CR bounds" begin
+        test_cramer_rao_bound_kraus()
+    end
+    @testset "Bounds with scheme" begin
+        test_bounds_with_scheme()
+    end
+    @testset "QFIM Bloch" begin
+        test_qfim_bloch()
+    end
+    @testset "QFIM Gauss" begin
+        test_qfim_gauss()
+    end
+    @testset "FIM" begin
+        test_fim()
+    end
+    @testset "SLD bad rep" begin
+        test_sld_bad_rep()
+    end
+    @testset "QFIM scheme RLD/LLD" begin
+        test_qfim_scheme_rld_lld()
+    end
+    @testset "QFIM Bloch mixed state" begin
+        test_qfim_bloch_mixed_state()
+    end
+    @testset "QFIM Bloch multipara" begin
+        test_qfim_bloch_multipara()
+    end
+    @testset "QFIM full trajectory" begin
+        test_qfim_full_trajectory()
+    end
+    @testset "CFIM full trajectory" begin
+        test_cfim_full_trajectory()
+    end
+    @testset "FI Expt" begin
+        test_fi_expt()
+    end
 
     # Bug #9: RLD/LLD existence check
     @testset "#9 RLD/LLD existence check" begin
         rho_full = ComplexF64[0.6 0.0; 0.0 0.4]
         drho_full = ComplexF64[0.1 0.05; 0.05 -0.1]
-        R = RLD(rho_full, drho_full; rep="original")
-        L = LLD(rho_full, drho_full; rep="original")
+        R = RLD(rho_full, drho_full; rep = "original")
+        L = LLD(rho_full, drho_full; rep = "original")
         @test norm(rho_full * R - drho_full) < 1e-10
         @test norm(L * rho_full - drho_full) < 1e-10
         rho_sing = ComplexF64[1.0 0.0; 0.0 0.0]
@@ -222,10 +252,12 @@ function test_cramer_rao()
     @testset "pinv bypass: QFIM_RLD/LLD calls operator functions" begin
         rho_full = ComplexF64[0.6 0.0; 0.0 0.4]
         drho_full = ComplexF64[0.1 0.05; 0.05 -0.1]
-        F_rld = QFIM(rho_full, [drho_full]; LDtype=:RLD)
-        F_lld = QFIM(rho_full, [drho_full]; LDtype=:LLD)
-        @test isapprox(F_rld, F_lld, rtol=1e-10)
+        F_rld = QFIM(rho_full, [drho_full]; LDtype = :RLD)
+        F_lld = QFIM(rho_full, [drho_full]; LDtype = :LLD)
+        @test isapprox(F_rld, F_lld, rtol = 1e-10)
     end
 end
 
-@testset "Cramer-Rao bounds" begin test_cramer_rao() end
+@testset "Cramer-Rao bounds" begin
+    test_cramer_rao()
+end

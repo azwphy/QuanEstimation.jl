@@ -31,16 +31,16 @@ function simpson(x::AbstractVector, y::AbstractVector)
     if n % 2 == 0
         h = (x[end] - x[1]) / (n - 1)
         s = y[1] + y[end]
-        s += 4 * sum(y[2:2:n-2])
-        s += 2 * sum(y[3:2:n-3])
+        s += 4 * sum(y[2:2:(n-2)])
+        s += 2 * sum(y[3:2:(n-3)])
         s = h * s / 3
         s += 0.5 * h * (y[end-1] + y[end])
         return s
     end
     h = (x[end] - x[1]) / (n - 1)
     s = y[1] + y[end]
-    s += 4 * sum(y[2:2:n-1])
-    s += 2 * sum(y[3:2:n-2])
+    s += 4 * sum(y[2:2:(n-1)])
+    s += 2 * sum(y[3:2:(n-2)])
     return h * s / 3
 end
 

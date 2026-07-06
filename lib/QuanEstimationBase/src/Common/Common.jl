@@ -10,7 +10,7 @@ Construct the ``N``-dimensional bosonic annihilation operator.
 a = \sum_{n=1}^{N-1} \sqrt{n} \, |n-1\rangle\langle n|
 ```
 raw"""
-destroy(N) = diagm(1 => [sqrt(n) + 0.0im for n = 1:N-1])
+destroy(N) = diagm(1 => [sqrt(n) + 0.0im for n = 1:(N-1)])
 
 raw"""
 
@@ -139,7 +139,7 @@ function suN_generator(n::Int64)
     idx = 2
     itr = 1
 
-    for i = 1:n-1
+    for i = 1:(n-1)
         idx_t = idx
         while idx_t > 0
             result[itr] =
@@ -421,7 +421,7 @@ function gramschmidt(A::Vector{Vector{ComplexF64}})
     Q = [zeros(ComplexF64, n) for i = 1:m]
     for j = 1:m
         q = A[j]
-        for i = 1:j-1
+        for i = 1:(j-1)
             rij = dot(Q[i], q)
             q = q - rij * Q[i]
         end
@@ -598,7 +598,7 @@ function initial_Rotation!(measurement0, s_all, dim, p_num, rng)
         measurement0 = [measurement0[i] for i = 1:p_num]
     end
     for pj in eachindex(measurement0)
-        s_all[pj] = [measurement0[pj][i] for i = 1:dim*dim]
+        s_all[pj] = [measurement0[pj][i] for i = 1:(dim*dim)]
     end
 
     for pj = (length(measurement0)+1):p_num

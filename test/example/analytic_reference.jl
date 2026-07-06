@@ -18,16 +18,16 @@ function analytic_sysB(t, omega, gamma_minus)
     eigvals = [(1.0 + R) / 2.0, (1.0 - R) / 2.0]
     eigvecs = Vector{ComplexF64}[]
     if R > 1e-15
-        n1 = ComplexF64[r1 - im * r2, R - r3]
+        n1 = ComplexF64[r1-im*r2, R-r3]
         n1 ./= norm(n1)
-        n2 = ComplexF64[r1 - im * r2, -R - r3]
+        n2 = ComplexF64[r1-im*r2, -R-r3]
         n2 ./= norm(n2)
         eigvecs = [n1, n2]
     else
         eigvecs = [ComplexF64[1.0, 0.0], ComplexF64[0.0, 1.0]]
     end
     F_exact = 0.0
-    for i in 1:2, j in 1:2
+    for i = 1:2, j = 1:2
         denom = eigvals[i] + eigvals[j]
         denom > 1e-15 || continue
         mat_elem = eigvecs[i]' * drho * eigvecs[j]
@@ -37,7 +37,10 @@ function analytic_sysB(t, omega, gamma_minus)
 end
 
 function analytic_sysC(t, omega, gamma)
-    rho = ComplexF64[0.5 0.5*exp(-im*omega*t - 2*gamma*t); 0.5*exp(im*omega*t - 2*gamma*t) 0.5]
+    rho = ComplexF64[
+        0.5 0.5*exp(-im*omega*t - 2*gamma*t);
+        0.5*exp(im*omega*t - 2*gamma*t) 0.5
+    ]
     d01 = -0.5 * im * t * exp(-im * omega * t - 2 * gamma * t)
     drho = ComplexF64[0.0 d01; conj(d01) 0.0]
     F_exact = t^2 * exp(-4 * gamma * t)
@@ -51,7 +54,7 @@ function bell_basis()
     Psi_minus = ComplexF64[0, 1, -1, 0] / sqrt(2)
     kets = [Phi_plus, Phi_minus, Psi_plus, Psi_minus]
     projs = [ket * ket' for ket in kets]
-    return (kets=kets, projs=projs)
+    return (kets = kets, projs = projs)
 end
 
 function analytic_magnetic_state(t, B, theta, phi)
@@ -94,9 +97,9 @@ end
 function analytic_magnetic_qfim_pure(t, B, theta, phi)
     psi, dpsis = analytic_magnetic_state(t, B, theta, phi)
     F = zeros(Float64, 3, 3)
-    for i in 1:3, j in 1:3
+    for i = 1:3, j = 1:3
         overlap = dpsis[i]' * dpsis[j]
-        F[i,j] = 4 * real(overlap - (dpsis[i]' * psi) * (psi' * dpsis[j]))
+        F[i, j] = 4 * real(overlap - (dpsis[i]' * psi) * (psi' * dpsis[j]))
     end
     return F
 end
@@ -115,10 +118,14 @@ function analytic_magnetic_rho_noisy(t, B, theta, phi, gamma)
     rho_pure = psi * psi'
     decay = exp(-gamma * t)
     rho = copy(rho_pure)
-    rho[1,3] *= decay; rho[1,4] *= decay
-    rho[2,3] *= decay; rho[2,4] *= decay
-    rho[3,1] *= decay; rho[3,2] *= decay
-    rho[4,1] *= decay; rho[4,2] *= decay
+    rho[1, 3] *= decay;
+    rho[1, 4] *= decay
+    rho[2, 3] *= decay;
+    rho[2, 4] *= decay
+    rho[3, 1] *= decay;
+    rho[3, 2] *= decay
+    rho[4, 1] *= decay;
+    rho[4, 2] *= decay
     return rho
 end
 
@@ -133,18 +140,18 @@ function analytic_magnetic_qfim_noisy(t, B, theta, phi, gamma)
 
     F = zeros(Float64, 3, 3)
 
-    F[1,1] = 4 * t^2 * (cth^2 * ed + sth^2)
-    F[2,2] = 4 * st^2 * (cth^2 + sth^2 * (ed * ct^2 + st^2))
-    F[3,3] = 4 * sth^2 * st^2 * (1 - (1 - ed) * sth^2 * st^2)
+    F[1, 1] = 4 * t^2 * (cth^2 * ed + sth^2)
+    F[2, 2] = 4 * st^2 * (cth^2 + sth^2 * (ed * ct^2 + st^2))
+    F[3, 3] = 4 * sth^2 * st^2 * (1 - (1 - ed) * sth^2 * st^2)
 
-    F[1,2] = (1 - ed) * t * sin(2 * B * t) * s2th
-    F[2,1] = F[1,2]
+    F[1, 2] = (1 - ed) * t * sin(2 * B * t) * s2th
+    F[2, 1] = F[1, 2]
 
-    F[1,3] = -2 * (1 - ed) * t * s2th * sth * st^2
-    F[3,1] = F[1,3]
+    F[1, 3] = -2 * (1 - ed) * t * s2th * sth * st^2
+    F[3, 1] = F[1, 3]
 
-    F[2,3] = 2 * (1 - ed) * sth^3 * sin(2 * B * t) * st^2
-    F[3,2] = F[2,3]
+    F[2, 3] = 2 * (1 - ed) * sth^3 * sin(2 * B * t) * st^2
+    F[3, 2] = F[2, 3]
 
     return F
 end
@@ -164,22 +171,34 @@ function analytic_magnetic_bell_probs(t, B, theta, phi, gamma)
     return [p1, p2, p3, p4]
 end
 
-function analytic_magnetic_cfim_bell(t, B, theta, phi, gamma; eps_val=1e-8)
+function analytic_magnetic_cfim_bell(t, B, theta, phi, gamma; eps_val = 1e-8)
     p = analytic_magnetic_bell_probs(t, B, theta, phi, gamma)
     nparam = 3
-    dp = [zeros(Float64, 4) for _ in 1:nparam]
-    for i in 1:nparam
-        for s in 1:4
-            p_plus = analytic_magnetic_bell_probs(t, B + (i==1)*eps_val, theta + (i==2)*eps_val, phi + (i==3)*eps_val, gamma)
-            p_minus = analytic_magnetic_bell_probs(t, B - (i==1)*eps_val, theta - (i==2)*eps_val, phi - (i==3)*eps_val, gamma)
+    dp = [zeros(Float64, 4) for _ = 1:nparam]
+    for i = 1:nparam
+        for s = 1:4
+            p_plus = analytic_magnetic_bell_probs(
+                t,
+                B + (i==1)*eps_val,
+                theta + (i==2)*eps_val,
+                phi + (i==3)*eps_val,
+                gamma,
+            )
+            p_minus = analytic_magnetic_bell_probs(
+                t,
+                B - (i==1)*eps_val,
+                theta - (i==2)*eps_val,
+                phi - (i==3)*eps_val,
+                gamma,
+            )
             dp[i][s] = (p_plus[s] - p_minus[s]) / (2 * eps_val)
         end
     end
     F = zeros(Float64, nparam, nparam)
-    for i in 1:nparam, j in 1:nparam
-        for s in 1:4
+    for i = 1:nparam, j = 1:nparam
+        for s = 1:4
             p[s] > 1e-14 || continue
-            F[i,j] += dp[i][s] * dp[j][s] / p[s]
+            F[i, j] += dp[i][s] * dp[j][s] / p[s]
         end
     end
     return F
@@ -209,8 +228,14 @@ function analytic_magnetic_optimal_ctrl(B, theta, phi, cnum)
     Vx1 = -B * sin(theta) * cos(phi)
     Vy1 = -B * sin(theta) * sin(phi)
     Vz1 = -B * cos(theta)
-    return [fill(Vx1, cnum), fill(Vy1, cnum), fill(Vz1, cnum),
-            zeros(cnum), zeros(cnum), zeros(cnum)]
+    return [
+        fill(Vx1, cnum),
+        fill(Vy1, cnum),
+        fill(Vz1, cnum),
+        zeros(cnum),
+        zeros(cnum),
+        zeros(cnum),
+    ]
 end
 
 function analytic_sysD(t, omega1, omega2, g)
@@ -220,31 +245,59 @@ function analytic_sysD(t, omega1, omega2, g)
     alpha = (ct - im * (omega1 + omega2 + g) / Omega * st) / sqrt(2)
     beta = (ct + im * (omega1 + omega2 - g) / Omega * st) / sqrt(2)
     rho = zeros(ComplexF64, 4, 4)
-    rho[1,1] = abs2(alpha)
-    rho[1,4] = alpha * conj(beta)
-    rho[4,1] = conj(rho[1,4])
-    rho[4,4] = abs2(beta)
+    rho[1, 1] = abs2(alpha)
+    rho[1, 4] = alpha * conj(beta)
+    rho[4, 1] = conj(rho[1, 4])
+    rho[4, 4] = abs2(beta)
     dOmega_dw1 = (omega1 + omega2) / Omega
     dct = -st * Omega * t * dOmega_dw1
     dst = ct * Omega * t * dOmega_dw1
-    dalpha = (dct - im * ((1/Omega - (omega1+omega2+g)/Omega^2 * dOmega_dw1) * st + (omega1+omega2+g)/Omega * dst)) / sqrt(2)
-    dbeta = (dct + im * ((1/Omega - (omega1+omega2-g)/Omega^2 * dOmega_dw1) * st + (omega1+omega2-g)/Omega * dst)) / sqrt(2)
+    dalpha =
+        (
+            dct -
+            im * (
+                (1/Omega - (omega1+omega2+g)/Omega^2 * dOmega_dw1) * st +
+                (omega1+omega2+g)/Omega * dst
+            )
+        ) / sqrt(2)
+    dbeta =
+        (
+            dct +
+            im * (
+                (1/Omega - (omega1+omega2-g)/Omega^2 * dOmega_dw1) * st +
+                (omega1+omega2-g)/Omega * dst
+            )
+        ) / sqrt(2)
     drho1 = zeros(ComplexF64, 4, 4)
-    drho1[1,1] = dalpha * conj(alpha) + alpha * conj(dalpha)
-    drho1[1,4] = dalpha * conj(beta) + alpha * conj(dbeta)
-    drho1[4,1] = conj(drho1[1,4])
-    drho1[4,4] = dbeta * conj(beta) + beta * conj(dbeta)
+    drho1[1, 1] = dalpha * conj(alpha) + alpha * conj(dalpha)
+    drho1[1, 4] = dalpha * conj(beta) + alpha * conj(dbeta)
+    drho1[4, 1] = conj(drho1[1, 4])
+    drho1[4, 4] = dbeta * conj(beta) + beta * conj(dbeta)
     psi = [alpha; 0.0; 0.0; beta]
     dpsi_w1 = [dalpha; 0.0; 0.0; dbeta]
     F11 = 4 * real(dpsi_w1' * dpsi_w1 - abs2(dpsi_w1' * psi))
     dOmega_dw2 = (omega1 + omega2) / Omega
-    dalpha2 = (dct - im * ((1/Omega - (omega1+omega2+g)/Omega^2 * dOmega_dw2) * st + (omega1+omega2+g)/Omega * dst)) / sqrt(2)
-    dbeta2 = (dct + im * ((1/Omega - (omega1+omega2-g)/Omega^2 * dOmega_dw2) * st + (omega1+omega2-g)/Omega * dst)) / sqrt(2)
+    dalpha2 =
+        (
+            dct -
+            im * (
+                (1/Omega - (omega1+omega2+g)/Omega^2 * dOmega_dw2) * st +
+                (omega1+omega2+g)/Omega * dst
+            )
+        ) / sqrt(2)
+    dbeta2 =
+        (
+            dct +
+            im * (
+                (1/Omega - (omega1+omega2-g)/Omega^2 * dOmega_dw2) * st +
+                (omega1+omega2-g)/Omega * dst
+            )
+        ) / sqrt(2)
     drho2 = zeros(ComplexF64, 4, 4)
-    drho2[1,1] = dalpha2 * conj(alpha) + alpha * conj(dalpha2)
-    drho2[1,4] = dalpha2 * conj(beta) + alpha * conj(dbeta2)
-    drho2[4,1] = conj(drho2[1,4])
-    drho2[4,4] = dbeta2 * conj(beta) + beta * conj(dbeta2)
+    drho2[1, 1] = dalpha2 * conj(alpha) + alpha * conj(dalpha2)
+    drho2[1, 4] = dalpha2 * conj(beta) + alpha * conj(dbeta2)
+    drho2[4, 1] = conj(drho2[1, 4])
+    drho2[4, 4] = dbeta2 * conj(beta) + beta * conj(dbeta2)
     dpsi_w2 = [dalpha2; 0.0; 0.0; dbeta2]
     F22 = 4 * real(dpsi_w2' * dpsi_w2 - abs2(dpsi_w2' * psi))
     F12 = 4 * real(dpsi_w1' * dpsi_w2 - (dpsi_w1' * psi) * conj(dpsi_w2' * psi))
@@ -272,5 +325,5 @@ end
 # optimal N→∞ QFIM 4 T^2 diag(1, B², B² sin²θ).
 function cartesian_trinv(F, B, theta)
     Fi = inv(F)
-    return real(Fi[1,1] + B^2 * Fi[2,2] + B^2 * sin(theta)^2 * Fi[3,3])
+    return real(Fi[1, 1] + B^2 * Fi[2, 2] + B^2 * sin(theta)^2 * Fi[3, 3])
 end

@@ -20,9 +20,9 @@ used in Bayesian bound calculations.
 - `dp::Union{Nothing,AbstractVector}`: Prior derivatives ``\partial_a p(\mathbf{x})``.
 """
 struct Strategy <: EstimationStrategy
-    x::Union{Nothing, AbstractVector}
-    p::Union{Nothing, AbstractVector}
-    dp::Union{Nothing, AbstractVector}
+    x::Union{Nothing,AbstractVector}
+    p::Union{Nothing,AbstractVector}
+    dp::Union{Nothing,AbstractVector}
 end
 
 """

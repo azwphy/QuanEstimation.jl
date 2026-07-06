@@ -2,15 +2,8 @@ using Test
 using LinearAlgebra
 using QuadGK: quadgk
 
-using QuanEstimationBase: 
-    BCRB, 
-    VTB, 
-    BQCRB, 
-    QVTB, 
-    QZZB,
-    Lindblad,
-    GeneralScheme,
-    SigmaX, SigmaY, SigmaZ
+using QuanEstimationBase:
+    BCRB, VTB, BQCRB, QVTB, QZZB, Lindblad, GeneralScheme, SigmaX, SigmaY, SigmaZ
 
 
 function test_bayesian_cramer_rao_bounds_singleparameter()
@@ -51,7 +44,7 @@ function test_bayesian_cramer_rao_bounds_singleparameter()
     @test f_qvtb ≈ expected_qvtb atol=1e-3
 
     f_qzzb = QZZB(scheme)
-    expected_qzzb = 0.028521709437588784 
+    expected_qzzb = 0.028521709437588784
     @test f_qzzb ≈ expected_qzzb atol=1e-3
 
 end
@@ -65,9 +58,12 @@ end
     H0(xi) = 0.5 * pi * (sx * cos(xi) + sz * sin(xi))
     dH(xi) = [0.5 * pi * (-sx * sin(xi) + sz * cos(xi))]
     rho_ev = [
-        QuanEstimationBase.expm(range(0.0, 1.0, length = 10),
-            0.5 * ones(2, 2), H0(xi), dH(xi))
-        for xi in x
+        QuanEstimationBase.expm(
+            range(0.0, 1.0, length = 10),
+            0.5 * ones(2, 2),
+            H0(xi),
+            dH(xi),
+        ) for xi in x
     ]
     rho = [r[1][end] for r in rho_ev]
     drho = [r[2][end] for r in rho_ev]

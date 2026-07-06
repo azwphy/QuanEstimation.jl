@@ -10,56 +10,74 @@ using QuanEstimationBase:
     evolve,
     GeneralScheme,
     get_dim,
-    SigmaX, SigmaY, SigmaZ,
-    ZeroCTRL, LinearCTRL, SineCTRL, SawCTRL, TriangleCTRL, GaussianCTRL, GaussianEdgeCTRL, 
+    SigmaX,
+    SigmaY,
+    SigmaZ,
+    ZeroCTRL,
+    LinearCTRL,
+    SineCTRL,
+    SawCTRL,
+    TriangleCTRL,
+    GaussianCTRL,
+    GaussianEdgeCTRL,
     Hamiltonian,
-    PlusState, MinusState, BellState, 
+    PlusState,
+    MinusState,
+    BellState,
     Kraus,
     QFIM_Kraus
 
 
-function test_lindblad(;dyn_method=:Ode)
+function test_lindblad(; dyn_method = :Ode)
     (; tspan, rho0, H0, dH, Hc, decay, ctrl, M) = generate_qubit_dynamics()
 
     expm(tspan, rho0, H0, dH[1])
     ode(tspan, rho0, H0, dH[1])
-    ode(tspan, rho0, H0, dH, decay=decay, Hc=Hc, ctrl=ctrl)
+    ode(tspan, rho0, H0, dH, decay = decay, Hc = Hc, ctrl = ctrl)
 
-    Lindblad(H0, dH, tspan, Hc; ctrl=ZeroCTRL())
-    Lindblad(H0, dH, tspan, Hc; ctrl=LinearCTRL())
-    Lindblad(H0, dH, tspan, Hc; ctrl=SineCTRL())
-    Lindblad(H0, dH, tspan, Hc; ctrl=SawCTRL())
-    Lindblad(H0, dH, tspan, Hc; ctrl=TriangleCTRL())
-    Lindblad(H0, dH, tspan, Hc; ctrl=GaussianCTRL())
-    Lindblad(H0, dH, tspan, Hc; ctrl=GaussianEdgeCTRL())
+    Lindblad(H0, dH, tspan, Hc; ctrl = ZeroCTRL())
+    Lindblad(H0, dH, tspan, Hc; ctrl = LinearCTRL())
+    Lindblad(H0, dH, tspan, Hc; ctrl = SineCTRL())
+    Lindblad(H0, dH, tspan, Hc; ctrl = SawCTRL())
+    Lindblad(H0, dH, tspan, Hc; ctrl = TriangleCTRL())
+    Lindblad(H0, dH, tspan, Hc; ctrl = GaussianCTRL())
+    Lindblad(H0, dH, tspan, Hc; ctrl = GaussianEdgeCTRL())
 
-    dynamics = Lindblad(H0, dH, tspan; dyn_method=dyn_method)
-    scheme = GeneralScheme(; probe=rho0, param=dynamics)
-    expm(scheme);ode(scheme);evolve(scheme)
+    dynamics = Lindblad(H0, dH, tspan; dyn_method = dyn_method)
+    scheme = GeneralScheme(; probe = rho0, param = dynamics)
+    expm(scheme);
+    ode(scheme);
+    evolve(scheme)
     @test get_dim(scheme) > 0
 
-    dynamics = Lindblad(H0, dH, tspan, decay; dyn_method=dyn_method)
-    scheme = GeneralScheme(; probe=rho0, param=dynamics)
-    expm(scheme);ode(scheme);evolve(scheme)
+    dynamics = Lindblad(H0, dH, tspan, decay; dyn_method = dyn_method)
+    scheme = GeneralScheme(; probe = rho0, param = dynamics)
+    expm(scheme);
+    ode(scheme);
+    evolve(scheme)
     @test get_dim(scheme) > 0
 
-    dynamics = Lindblad(H0, dH, tspan, Hc; dyn_method=dyn_method)
-    scheme = GeneralScheme(; probe=rho0, param=dynamics)
-    expm(scheme);ode(scheme);evolve(scheme)
+    dynamics = Lindblad(H0, dH, tspan, Hc; dyn_method = dyn_method)
+    scheme = GeneralScheme(; probe = rho0, param = dynamics)
+    expm(scheme);
+    ode(scheme);
+    evolve(scheme)
     @test get_dim(scheme) > 0
 
-    dynamics = Lindblad(H0, dH, tspan, Hc, decay; ctrl=ctrl, dyn_method=dyn_method)
-    scheme = GeneralScheme(; probe=rho0, param=dynamics)
-    expm(scheme);ode(scheme);evolve(scheme)
+    dynamics = Lindblad(H0, dH, tspan, Hc, decay; ctrl = ctrl, dyn_method = dyn_method)
+    scheme = GeneralScheme(; probe = rho0, param = dynamics)
+    expm(scheme);
+    ode(scheme);
+    evolve(scheme)
     @test get_dim(scheme) > 0
 
-    (;H0_func, dH_func) = generate_bayes()
-    
+    (; H0_func, dH_func) = generate_bayes()
+
     ham = Hamiltonian(H0_func, dH_func, 1.0)
-    dynamics = Lindblad(ham, tspan, decay; dyn_method=dyn_method)
-    dynamics = Lindblad(ham, tspan, Hc; dyn_method=dyn_method)
-    dynamics = Lindblad(ham, tspan, Hc, decay; dyn_method=dyn_method)
-    scheme = GeneralScheme(; probe=rho0, param=dynamics)
+    dynamics = Lindblad(ham, tspan, decay; dyn_method = dyn_method)
+    dynamics = Lindblad(ham, tspan, Hc; dyn_method = dyn_method)
+    dynamics = Lindblad(ham, tspan, Hc, decay; dyn_method = dyn_method)
+    scheme = GeneralScheme(; probe = rho0, param = dynamics)
     evolve(scheme)
 
 
@@ -82,11 +100,11 @@ methods solve the same Lindblad master equation numerically.
 function test_lindblad_consistency()
     (; tspan, rho0, H0, dH, Hc) = generate_qubit_dynamics()
 
-    dyn_free = Lindblad(H0, dH, tspan; dyn_method=:Expm)
-    dyn_ctrl = Lindblad(H0, dH, tspan, Hc; ctrl=ZeroCTRL(), dyn_method=:Expm)
+    dyn_free = Lindblad(H0, dH, tspan; dyn_method = :Expm)
+    dyn_ctrl = Lindblad(H0, dH, tspan, Hc; ctrl = ZeroCTRL(), dyn_method = :Expm)
 
-    F_free = QFIM(GeneralScheme(; probe=rho0, param=dyn_free))
-    F_ctrl = QFIM(GeneralScheme(; probe=rho0, param=dyn_ctrl))
+    F_free = QFIM(GeneralScheme(; probe = rho0, param = dyn_free))
+    F_ctrl = QFIM(GeneralScheme(; probe = rho0, param = dyn_ctrl))
 
     @test F_free ≈ F_ctrl rtol=1e-10
 end
@@ -96,20 +114,20 @@ function test_lindblad_pure()
 
     expm(tspan, rho0, H0, dH[1])
     ode(tspan, rho0, H0, dH[1])
-    ode(tspan, rho0, H0, dH, decay=decay, Hc=Hc, ctrl=ctrl)
+    ode(tspan, rho0, H0, dH, decay = decay, Hc = Hc, ctrl = ctrl)
 
     dynamics = Lindblad(H0, dH, tspan)
-    scheme = GeneralScheme(; probe=PlusState(), param=dynamics)
+    scheme = GeneralScheme(; probe = PlusState(), param = dynamics)
     evolve(scheme)
     @test get_dim(scheme) > 0
-    
+
     dynamics = Lindblad(H0, dH, tspan, decay)
-    scheme = GeneralScheme(; probe=PlusState(), param=dynamics)
+    scheme = GeneralScheme(; probe = PlusState(), param = dynamics)
     evolve(scheme)
     @test get_dim(scheme) > 0
 
     dynamics = Lindblad(H0, dH, tspan, Hc, decay)
-    scheme = GeneralScheme(; probe=PlusState(), param=dynamics)
+    scheme = GeneralScheme(; probe = PlusState(), param = dynamics)
     evolve(scheme)
     @test get_dim(scheme) > 0
 
@@ -126,16 +144,16 @@ function test_lindblad_pure_qfim()
     psi = PlusState()
     rho_mixed = psi * psi'
 
-    dyn = Lindblad(H0, dH, tspan, Hc, decay; ctrl=ctrl, dyn_method=:Expm)
+    dyn = Lindblad(H0, dH, tspan, Hc, decay; ctrl = ctrl, dyn_method = :Expm)
 
-    F_pure  = QFIM(GeneralScheme(; probe=psi, param=dyn))
-    F_mixed = QFIM(GeneralScheme(; probe=rho_mixed, param=dyn))
+    F_pure = QFIM(GeneralScheme(; probe = psi, param = dyn))
+    F_mixed = QFIM(GeneralScheme(; probe = rho_mixed, param = dyn))
 
     @test F_pure ≈ F_mixed rtol=1e-8
 end
 
-function test_kraus() 
-    (;rho0, psi, K, dK, K_func, dK_func) = generate_kraus()
+function test_kraus()
+    (; rho0, psi, K, dK, K_func, dK_func) = generate_kraus()
 
     F = QFIM_Kraus(rho0, K, dK)
     @test F isa Number
@@ -143,12 +161,12 @@ function test_kraus()
     @test F >= 0
 
     channel = Kraus(K, dK)
-    evolve(GeneralScheme(; probe=rho0, param=channel))
-    evolve(GeneralScheme(; probe=psi, param=channel))
+    evolve(GeneralScheme(; probe = rho0, param = channel))
+    evolve(GeneralScheme(; probe = psi, param = channel))
 
     channel = Kraus(K_func, dK_func, 0.5)
-    evolve(GeneralScheme(; probe=rho0, param=channel))
-    evolve(GeneralScheme(; probe=psi, param=channel))
+    evolve(GeneralScheme(; probe = rho0, param = channel))
+    evolve(GeneralScheme(; probe = psi, param = channel))
 end
 
 function test_state()
@@ -161,8 +179,8 @@ function test_state()
 end  # function test_state
 
 function test_parameterization()
-    test_lindblad(dyn_method=:Ode)
-    test_lindblad(dyn_method=:Expm)
+    test_lindblad(dyn_method = :Ode)
+    test_lindblad(dyn_method = :Expm)
     test_lindblad_pure()
     test_kraus()
 end  # function test_parameterization
@@ -173,5 +191,9 @@ end
 @testset "Pure state QFIM" begin
     test_lindblad_pure_qfim()
 end
-@testset "Parameterization smoke" begin test_parameterization() end
-@testset "Canonical States" begin test_state() end
+@testset "Parameterization smoke" begin
+    test_parameterization()
+end
+@testset "Canonical States" begin
+    test_state()
+end
