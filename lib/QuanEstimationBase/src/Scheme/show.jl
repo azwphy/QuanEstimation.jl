@@ -71,7 +71,10 @@ function annotations(x)
             end
         end
         if !startswith(doc, IGNORE_FIELD_DOC_PREFIX)
-            push!(res, (name=Symbol(f), type=nameof(typeof(v)), description=doc, value=v))
+            push!(
+                res,
+                (name = Symbol(f), type = nameof(typeof(v)), description = doc, value = v),
+            )
         end
     end
     return res
@@ -90,19 +93,30 @@ Base.convert(::Type{AnnotatedStructTree}, x::AnnotatedStructTree) = x
 Recursively convert a value `x` into an `AnnotatedStructTree` by annotating its fields.
 Scalar values become leaf nodes; struct values are expanded into children.
 """
-function Base.convert(::Type{AnnotatedStructTree}, x; name=Symbol(), type=nameof(typeof(x)), description="")
+function Base.convert(
+    ::Type{AnnotatedStructTree},
+    x;
+    name = Symbol(),
+    type = nameof(typeof(x)),
+    description = "",
+)
     ants = annotations(x)
     if isempty(ants)
-        AnnotatedStructTree(name=name, type=type, description=description, value=x)
+        AnnotatedStructTree(name = name, type = type, description = description, value = x)
     else
         AnnotatedStructTree(
-            name=name,
-            type=type,
-            description=description,
-            value=AnnotatedStructTree[
-                convert(AnnotatedStructTree, a.value; name=a.name, type=a.type, description=a.description)
-                for a in ants if a.value!=nothing
-            ]
+            name = name,
+            type = type,
+            description = description,
+            value = AnnotatedStructTree[
+                convert(
+                    AnnotatedStructTree,
+                    a.value;
+                    name = a.name,
+                    type = a.type,
+                    description = a.description,
+                ) for a in ants if a.value!=nothing
+            ],
         )
     end
 end
@@ -143,7 +157,8 @@ end
 
 Pretty-print an `AnnotatedStructTree` via `AbstractTrees.print_tree`.
 """
-Base.show(io::IO, ::MIME"text/plain", t::AnnotatedStructTree) = AT.print_tree(io, t; maxdepth=get(io, :maxdepth, 10))
+Base.show(io::IO, ::MIME"text/plain", t::AnnotatedStructTree) =
+    AT.print_tree(io, t; maxdepth = get(io, :maxdepth, 10))
 
 """
     annotated_fields(x::AbstractVecOrMat)
@@ -167,4 +182,5 @@ annotated_fields(x::Nothing) = ()
 
 Pretty-print an `AbstractScheme` as an annotated tree.
 """
-Base.show(io::IO, m::MIME"text/plain", s::AbstractScheme) = show(io, m, convert(AnnotatedStructTree, s))
+Base.show(io::IO, m::MIME"text/plain", s::AbstractScheme) =
+    show(io, m, convert(AnnotatedStructTree, s))

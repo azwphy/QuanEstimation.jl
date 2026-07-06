@@ -1,8 +1,19 @@
 using Test
 using LinearAlgebra
 using QuanEstimationBase
-using QuanEstimationBase: ControlOpt, CFIM_obj, GRAPE, autoGRAPE, DE, PSO, NM, RI,
-    optimize!, init_opt, Objective, Output
+using QuanEstimationBase:
+    ControlOpt,
+    CFIM_obj,
+    GRAPE,
+    autoGRAPE,
+    DE,
+    PSO,
+    NM,
+    RI,
+    optimize!,
+    init_opt,
+    Objective,
+    Output
 using Suppressor
 using Random
 
@@ -40,12 +51,12 @@ using Random
 
     @testset "State Evolution — Noiseless" begin
         for tval in [0.1, 0.5, 1.0, 2.0]
-            tspan = range(0.0, tval; length=200)
+            tspan = range(0.0, tval; length = 200)
             psi_an, _ = analytic_magnetic_state(tval, B, theta, phi)
             rho_an = psi_an * psi_an'
 
-            param = Lindblad(H0, dH, tspan; dyn_method=:Expm)
-            scheme = GeneralScheme(probe=probe_ket, param=param)
+            param = Lindblad(H0, dH, tspan; dyn_method = :Expm)
+            scheme = GeneralScheme(probe = probe_ket, param = param)
             rho_ev, _ = evolve(scheme)
 
             @test norm(rho_ev - rho_an) < 1e-10
@@ -56,39 +67,39 @@ using Random
         for tval in [0.1, 0.5, 1.0, 2.0]
             psi_an, dpsis_an = analytic_magnetic_state(tval, B, theta, phi)
             rho_an = psi_an * psi_an'
-            drhos_an = [(dpsis_an[i] * psi_an' + psi_an * dpsis_an[i]') for i in 1:3]
+            drhos_an = [(dpsis_an[i] * psi_an' + psi_an * dpsis_an[i]') for i = 1:3]
             F_exact = analytic_magnetic_qfim_pure(tval, B, theta, phi)
 
             F_pure = QuanEstimationBase.QFIM_pure(rho_an, drhos_an)
-            @test isapprox(F_pure, F_exact, rtol=1e-10)
+            @test isapprox(F_pure, F_exact, rtol = 1e-10)
 
-            F_sld = QFIM(rho_an, drhos_an; LDtype=:SLD)
-            @test isapprox(F_sld, F_exact, rtol=1e-10)
+            F_sld = QFIM(rho_an, drhos_an; LDtype = :SLD)
+            @test isapprox(F_sld, F_exact, rtol = 1e-10)
         end
     end
 
     @testset "QFIM — Noiseless (Evolved rho/drho)" begin
         for tval in [0.1, 0.5, 1.0, 2.0]
-            tspan = range(0.0, tval; length=200)
+            tspan = range(0.0, tval; length = 200)
             F_exact = analytic_magnetic_qfim_pure(tval, B, theta, phi)
 
-            param = Lindblad(H0, dH, tspan; dyn_method=:Expm)
-            scheme = GeneralScheme(probe=probe_ket, param=param)
+            param = Lindblad(H0, dH, tspan; dyn_method = :Expm)
+            scheme = GeneralScheme(probe = probe_ket, param = param)
             rho_ev, drhos_ev = evolve(scheme)
 
-            F_sld = QFIM(rho_ev, drhos_ev; LDtype=:SLD)
-            @test isapprox(F_sld, F_exact, rtol=2e-4)
+            F_sld = QFIM(rho_ev, drhos_ev; LDtype = :SLD)
+            @test isapprox(F_sld, F_exact, rtol = 2e-4)
 
             F_pure = QuanEstimationBase.QFIM_pure(rho_ev, drhos_ev)
-            @test isapprox(F_pure, F_exact, rtol=2e-4)
+            @test isapprox(F_pure, F_exact, rtol = 2e-4)
         end
     end
 
     @testset "SLD Hermiticity" begin
         tval = 1.0
-        tspan = range(0.0, tval; length=200)
-        param = Lindblad(H0, dH, tspan; dyn_method=:Expm)
-        scheme = GeneralScheme(probe=probe_ket, param=param)
+        tspan = range(0.0, tval; length = 200)
+        param = Lindblad(H0, dH, tspan; dyn_method = :Expm)
+        scheme = GeneralScheme(probe = probe_ket, param = param)
         rho_ev, drhos_ev = evolve(scheme)
 
         Ls = [SLD(rho_ev, d) for d in drhos_ev]
@@ -105,11 +116,11 @@ using Random
                 Fn = analytic_magnetic_qfim_limit_matrix_N(T, B, theta, N)
                 if N == 1
                     F1 = Float64[4*T^2 0 0; 0 4*sin(B*T)^2 0; 0 0 4*sin(B*T)^2*sin(theta)^2]
-                    @test isapprox(Fn, F1; rtol=1e-10)
+                    @test isapprox(Fn, F1; rtol = 1e-10)
                 end
                 cp = analytic_magnetic_cartesian_precision_N(T, B, N)
                 if N >= 100
-                    @test isapprox(cp, 3 / (4 * T^2); rtol=1e-2)
+                    @test isapprox(cp, 3 / (4 * T^2); rtol = 1e-2)
                 end
             end
         end
@@ -123,11 +134,15 @@ using Random
             # scheme A: J_1^max = 4 diag(T², sin²(BT), sin²(BT)sin²θ)
             Fa = analytic_magnetic_qfim_limit_matrix_N(T, B, theta, 1)
             cart_a = cartesian_trinv(Fa, B, theta)
-            @test isapprox(cart_a, analytic_magnetic_cartesian_precision_N(T, B, 1); rtol=1e-10)
+            @test isapprox(
+                cart_a,
+                analytic_magnetic_cartesian_precision_N(T, B, 1);
+                rtol = 1e-10,
+            )
             # scheme B N→∞: 4 T^2 diag(1, B², B² sin²θ)
             Fo = analytic_magnetic_qfim_limit_matrix(T, B, theta)
             cart_b = cartesian_trinv(Fo, B, theta)
-            @test isapprox(cart_b, 3 / (4 * T^2); rtol=1e-10)
+            @test isapprox(cart_b, 3 / (4 * T^2); rtol = 1e-10)
         end
     end
 
@@ -137,12 +152,16 @@ using Random
         for T in [0.5, 1.0, 2.0]
             gam = 0.0
             Fq0 = analytic_magnetic_qfim_noisy(T, B, theta, phi, gam)
-            Fa  = analytic_magnetic_qfim_limit_matrix_N(T, B, theta, 1)
-            @test isapprox(Fq0, Fa; rtol=1e-10)
+            Fa = analytic_magnetic_qfim_limit_matrix_N(T, B, theta, 1)
+            @test isapprox(Fq0, Fa; rtol = 1e-10)
             p0 = analytic_magnetic_bell_probs(T, B, theta, phi, gam)
-            pa = [cos(B*T)^2, sin(B*T)^2*cos(theta)^2,
-                  sin(B*T)^2*sin(theta)^2*cos(phi)^2, sin(B*T)^2*sin(theta)^2*sin(phi)^2]
-            @test isapprox(p0, pa; rtol=1e-10)
+            pa = [
+                cos(B*T)^2,
+                sin(B*T)^2*cos(theta)^2,
+                sin(B*T)^2*sin(theta)^2*cos(phi)^2,
+                sin(B*T)^2*sin(theta)^2*sin(phi)^2,
+            ]
+            @test isapprox(p0, pa; rtol = 1e-10)
         end
     end
 
@@ -151,19 +170,19 @@ using Random
         decay = [[sz_1, gamma_l]]
 
         for tval in [0.1, 0.5, 1.0, 2.0]
-            tspan = range(0.0, tval; length=200)
+            tspan = range(0.0, tval; length = 200)
 
-            param = Lindblad(H0, dH, tspan, decay; dyn_method=:Expm)
-            scheme = GeneralScheme(probe=probe_ket, param=param)
+            param = Lindblad(H0, dH, tspan, decay; dyn_method = :Expm)
+            scheme = GeneralScheme(probe = probe_ket, param = param)
             rho_ev, drhos_ev = evolve(scheme)
 
-            @test isapprox(tr(rho_ev), 1.0, rtol=1e-12)
+            @test isapprox(tr(rho_ev), 1.0, rtol = 1e-12)
             @test norm(rho_ev - rho_ev') < 1e-12
             @test minimum(real(eigvals(rho_ev))) >= -1e-10
 
-            F_sld = QFIM(rho_ev, drhos_ev; LDtype=:SLD)
+            F_sld = QFIM(rho_ev, drhos_ev; LDtype = :SLD)
             @test isposdef(F_sld)
-            F_nn = QFIM(rho_ev, drhos_ev; LDtype=:SLD)
+            F_nn = QFIM(rho_ev, drhos_ev; LDtype = :SLD)
             @test isposdef(F_nn)
         end
     end
@@ -179,9 +198,10 @@ using Random
         bell_projs = bell_basis().projs
 
         for tval in [0.3, 0.7, 1.2]
-            tspan = range(0.0, tval; length=400)
-            param = Lindblad(H0z, dHz, tspan, [[sz_1, gamma_q]]; dyn_method=:Expm)
-            scheme = GeneralScheme(probe=probe_ket, param=param, measurement=bell_projs)
+            tspan = range(0.0, tval; length = 400)
+            param = Lindblad(H0z, dHz, tspan, [[sz_1, gamma_q]]; dyn_method = :Expm)
+            scheme =
+                GeneralScheme(probe = probe_ket, param = param, measurement = bell_projs)
             rho_ev, _ = evolve(scheme)
 
             # (1) lab-frame ρ matches the Appendix-B closed form (θ=0, γ_p=2γ_q)
@@ -189,15 +209,15 @@ using Random
             @test norm(rho_ev - rho_an) < 1e-9
 
             # (2) strictly rank-2 with eigenvalues (1 ± e^{-γ_p t})/2 (paper §B)
-            ev = sort(real(eigvals(rho_ev)); rev=true)
+            ev = sort(real(eigvals(rho_ev)); rev = true)
             @test abs(ev[3]) + abs(ev[4]) < 1e-9
-            @test isapprox(ev[1], (1 + exp(-gamma_p * tval)) / 2; rtol=1e-6)
-            @test isapprox(ev[2], (1 - exp(-gamma_p * tval)) / 2; rtol=1e-6)
+            @test isapprox(ev[1], (1 + exp(-gamma_p * tval)) / 2; rtol = 1e-6)
+            @test isapprox(ev[2], (1 - exp(-gamma_p * tval)) / 2; rtol = 1e-6)
 
             # (3) Bell-basis probabilities match the closed form
-            p_num = [real(tr(bell_projs[i] * rho_ev)) for i in 1:4]
-            p_an  = analytic_magnetic_bell_probs(tval, B, 0.0, phi, gamma_p)
-            @test isapprox(p_num, p_an; rtol=1e-6)
+            p_num = [real(tr(bell_projs[i] * rho_ev)) for i = 1:4]
+            p_an = analytic_magnetic_bell_probs(tval, B, 0.0, phi, gamma_p)
+            @test isapprox(p_num, p_an; rtol = 1e-6)
         end
     end
 
@@ -206,17 +226,17 @@ using Random
         decay = [[sz_1, gamma_l]]
 
         for tval in [0.1, 0.5, 1.0]
-            tspan_nn = range(0.0, tval; length=200)
+            tspan_nn = range(0.0, tval; length = 200)
 
-            param_nn = Lindblad(H0, dH, tspan_nn; dyn_method=:Expm)
-            scheme_nn = GeneralScheme(probe=probe_ket, param=param_nn)
+            param_nn = Lindblad(H0, dH, tspan_nn; dyn_method = :Expm)
+            scheme_nn = GeneralScheme(probe = probe_ket, param = param_nn)
             rho_nn, drhos_nn = evolve(scheme_nn)
-            F_nn = QFIM(rho_nn, drhos_nn; LDtype=:SLD)
+            F_nn = QFIM(rho_nn, drhos_nn; LDtype = :SLD)
 
-            param_noisy = Lindblad(H0, dH, tspan_nn, decay; dyn_method=:Expm)
-            scheme_noisy = GeneralScheme(probe=probe_ket, param=param_noisy)
+            param_noisy = Lindblad(H0, dH, tspan_nn, decay; dyn_method = :Expm)
+            scheme_noisy = GeneralScheme(probe = probe_ket, param = param_noisy)
             rho_noisy, drhos_noisy = evolve(scheme_noisy)
-            F_noisy = QFIM(rho_noisy, drhos_noisy; LDtype=:SLD)
+            F_noisy = QFIM(rho_noisy, drhos_noisy; LDtype = :SLD)
 
             M_diff = F_nn - F_noisy
             @test minimum(real(eigvals(M_diff))) >= -1e-10
@@ -229,20 +249,20 @@ using Random
         bell_projs = bell.projs
 
         function measure_bell(rho)
-            [real(tr(bell_projs[i] * rho)) for i in 1:4]
+            [real(tr(bell_projs[i] * rho)) for i = 1:4]
         end
 
         @testset "Noiseless (γ=0)" begin
             for tval in [0.1, 0.5, 1.0]
-                tspan = range(0.0, tval; length=200)
+                tspan = range(0.0, tval; length = 200)
                 ps_an = analytic_magnetic_bell_probs(tval, B, theta, phi, 0.0)
 
-                param = Lindblad(H0, dH, tspan; dyn_method=:Expm)
-                scheme = GeneralScheme(probe=probe_ket, param=param)
+                param = Lindblad(H0, dH, tspan; dyn_method = :Expm)
+                scheme = GeneralScheme(probe = probe_ket, param = param)
                 rho_ev, _ = evolve(scheme)
                 ps_num = measure_bell(rho_ev)
 
-                @test isapprox(ps_num, ps_an, rtol=1e-12)
+                @test isapprox(ps_num, ps_an, rtol = 1e-12)
                 @test sum(ps_num) ≈ 1.0 rtol=1e-12
             end
         end
@@ -251,9 +271,9 @@ using Random
             gamma_l = 0.1
             decay = [[sz_1, gamma_l]]
             for tval in [0.1, 0.5, 1.0]
-                tspan = range(0.0, tval; length=200)
-                param = Lindblad(H0, dH, tspan, decay; dyn_method=:Expm)
-                scheme = GeneralScheme(probe=probe_ket, param=param)
+                tspan = range(0.0, tval; length = 200)
+                param = Lindblad(H0, dH, tspan, decay; dyn_method = :Expm)
+                scheme = GeneralScheme(probe = probe_ket, param = param)
                 rho_ev, _ = evolve(scheme)
                 ps_num = measure_bell(rho_ev)
 
@@ -268,16 +288,18 @@ using Random
         bell_projs = bell.projs
 
         for tval in [0.1, 0.5, 1.0]
-            tspan = range(0.0, tval; length=200)
-            F_cfim_an = analytic_magnetic_cfim_bell(tval, B, theta, phi, 0.0; eps_val=1e-6)
+            tspan = range(0.0, tval; length = 200)
+            F_cfim_an =
+                analytic_magnetic_cfim_bell(tval, B, theta, phi, 0.0; eps_val = 1e-6)
             F_qfim_exact = analytic_magnetic_qfim_pure(tval, B, theta, phi)
 
-            param = Lindblad(H0, dH, tspan; dyn_method=:Expm)
+            param = Lindblad(H0, dH, tspan; dyn_method = :Expm)
             M_meas = bell_projs
-            scheme_meas = GeneralScheme(probe=probe_ket, param=param, measurement=M_meas)
+            scheme_meas =
+                GeneralScheme(probe = probe_ket, param = param, measurement = M_meas)
             F_cfim = CFIM(scheme_meas)
 
-            @test isapprox(F_cfim, F_cfim_an, rtol=1e-4)
+            @test isapprox(F_cfim, F_cfim_an, rtol = 1e-4)
             @test real(det(F_cfim)) >= 0
 
             pos_diff = real(eigvals(2 * F_qfim_exact - F_cfim))
@@ -292,20 +314,21 @@ using Random
         bell_projs = bell.projs
 
         for tval in [0.1, 0.5, 1.0]
-            tspan = range(0.0, tval; length=200)
+            tspan = range(0.0, tval; length = 200)
 
-            param_cfim = Lindblad(H0, dH, tspan, decay; dyn_method=:Expm)
+            param_cfim = Lindblad(H0, dH, tspan, decay; dyn_method = :Expm)
             M_meas = bell_projs
-            scheme_cfim = GeneralScheme(probe=probe_ket, param=param_cfim, measurement=M_meas)
+            scheme_cfim =
+                GeneralScheme(probe = probe_ket, param = param_cfim, measurement = M_meas)
             F_cfim = CFIM(scheme_cfim)
 
             @test real(det(F_cfim)) >= 0
             @test isposdef(F_cfim)
 
-            param_qfim = Lindblad(H0, dH, tspan, decay; dyn_method=:Expm)
-            scheme_qfim = GeneralScheme(probe=probe_ket, param=param_qfim)
+            param_qfim = Lindblad(H0, dH, tspan, decay; dyn_method = :Expm)
+            scheme_qfim = GeneralScheme(probe = probe_ket, param = param_qfim)
             rho_q, drhos_q = evolve(scheme_qfim)
-            F_qfim = QFIM(rho_q, drhos_q; LDtype=:SLD)
+            F_qfim = QFIM(rho_q, drhos_q; LDtype = :SLD)
 
             M_pos = real(eigvals(F_qfim - F_cfim))
             @test minimum(M_pos) >= -1e-8
@@ -318,14 +341,22 @@ using Random
         # optimum J^max = 4 T^2 diag(1, B^2, B^2 sin^2θ). Purely analytic oracle,
         # no iterative optimization — deterministic and exact.
         for T0 in [0.5, 1.0, 2.0]
-            tspan = range(0.0, T0; length=100)
+            tspan = range(0.0, T0; length = 100)
             cnum = length(tspan) - 1
             ctrl_opt = analytic_magnetic_optimal_ctrl(B, theta, phi, cnum)
-            param = Lindblad(H0, dH, tspan, Hc; ctrl=ctrl_opt, dyn_method=:Expm)
-            scheme = GeneralScheme(probe=probe_rho, param=param)
+            param = Lindblad(H0, dH, tspan, Hc; ctrl = ctrl_opt, dyn_method = :Expm)
+            scheme = GeneralScheme(probe = probe_rho, param = param)
             Fq = QFIM(scheme)
-            @test isapprox(Fq, analytic_magnetic_qfim_limit_matrix(T0, B, theta); rtol=1e-2)
-            @test isapprox(tr(inv(Fq)), analytic_magnetic_qfim_limit_trinv(T0, B, theta); rtol=1e-2)
+            @test isapprox(
+                Fq,
+                analytic_magnetic_qfim_limit_matrix(T0, B, theta);
+                rtol = 1e-2,
+            )
+            @test isapprox(
+                tr(inv(Fq)),
+                analytic_magnetic_qfim_limit_trinv(T0, B, theta);
+                rtol = 1e-2,
+            )
         end
     end
 
@@ -335,26 +366,32 @@ using Random
         # bound the optimizer can never breach. Deterministic (zero-init + fixed seed).
         bell_projs = bell_basis().projs
         T0 = 1.0
-        tspan = range(0.0, T0; length=30)
+        tspan = range(0.0, T0; length = 30)
         cnum = length(tspan) - 1
         limit = analytic_magnetic_qfim_limit_trinv(T0, B, theta)  # = 1.0
 
         ctrl = [zeros(cnum) for _ in eachindex(Hc)]
-        param = Lindblad(H0, dH, tspan, Hc; ctrl=ctrl, dyn_method=:Expm)
-        scheme = GeneralScheme(probe=probe_rho, param=param, measurement=bell_projs)
+        param = Lindblad(H0, dH, tspan, Hc; ctrl = ctrl, dyn_method = :Expm)
+        scheme = GeneralScheme(probe = probe_rho, param = param, measurement = bell_projs)
         tr_inv_before = tr(pinv(CFIM(scheme)))
 
         Random.seed!(1234)
-        opt = ControlOpt(ctrl=ctrl, ctrl_bound=[-10.0, 10.0], seed=1234)
-        obj = CFIM_obj(M=bell_projs, para_type=:multi_para)
-        @suppress optimize!(scheme, opt; algorithm=GRAPE(Adam=false, max_episode=200, epsilon=0.5),
-                            objective=obj)
+        opt = ControlOpt(ctrl = ctrl, ctrl_bound = [-10.0, 10.0], seed = 1234)
+        obj = CFIM_obj(M = bell_projs, para_type = :multi_para)
+        @suppress optimize!(
+            scheme,
+            opt;
+            algorithm = GRAPE(Adam = false, max_episode = 200, epsilon = 0.5),
+            objective = obj,
+        )
         tr_inv_after = tr(pinv(CFIM(scheme)))
-        rm("f.csv", force=true); rm("controls.dat", force=true); rm("controls.csv", force=true)
+        rm("f.csv", force = true);
+        rm("controls.dat", force = true);
+        rm("controls.csv", force = true)
 
         @test tr_inv_after >= limit - 1e-6              # lower bound: CFIM ≥ QFIM optimum
         @test tr_inv_after < tr_inv_before               # monotone improvement (gradient sign)
-        @test isapprox(tr_inv_after, limit; rtol=0.05)   # converges to the optimum
+        @test isapprox(tr_inv_after, limit; rtol = 0.05)   # converges to the optimum
     end
 
     @testset "Control Optimization — Algorithm Coverage" begin
@@ -364,25 +401,35 @@ using Random
         # algorithms are recorded explicitly (regression guard).
         bell_projs = bell_basis().projs
         T0 = 1.0
-        tspan = range(0.0, T0; length=30)
+        tspan = range(0.0, T0; length = 30)
         cnum = length(tspan) - 1
         limit = analytic_magnetic_qfim_limit_trinv(T0, B, theta)
-        obj = CFIM_obj(M=bell_projs, para_type=:multi_para)
+        obj = CFIM_obj(M = bell_projs, para_type = :multi_para)
 
         mkscheme() = begin
             ctrl = [zeros(cnum) for _ in eachindex(Hc)]
-            param = Lindblad(H0, dH, tspan, Hc; ctrl=ctrl, dyn_method=:Expm)
-            GeneralScheme(probe=probe_rho, param=param, measurement=bell_projs), ctrl
+            param = Lindblad(H0, dH, tspan, Hc; ctrl = ctrl, dyn_method = :Expm)
+            GeneralScheme(probe = probe_rho, param = param, measurement = bell_projs), ctrl
         end
-        clean() = (rm("f.csv", force=true); rm("controls.dat", force=true); rm("controls.csv", force=true))
+        clean() = (
+            rm("f.csv", force = true);
+            rm("controls.dat", force = true);
+            rm("controls.csv", force = true)
+        )
 
         @testset "GRAPE (gradient)" begin
             scheme, ctrl = mkscheme()
             before = tr(pinv(CFIM(scheme)))
             Random.seed!(1234)
-            opt = ControlOpt(ctrl=ctrl, ctrl_bound=[-10.0, 10.0], seed=1234)
-            @suppress optimize!(scheme, opt; algorithm=GRAPE(Adam=false, max_episode=100, epsilon=0.5), objective=obj)
-            after = tr(pinv(CFIM(scheme))); clean()
+            opt = ControlOpt(ctrl = ctrl, ctrl_bound = [-10.0, 10.0], seed = 1234)
+            @suppress optimize!(
+                scheme,
+                opt;
+                algorithm = GRAPE(Adam = false, max_episode = 100, epsilon = 0.5),
+                objective = obj,
+            )
+            after = tr(pinv(CFIM(scheme)));
+            clean()
             @test after >= limit - 1e-6          # lower bound never breached
             @test after < before                  # improves over no-control
         end
@@ -391,10 +438,21 @@ using Random
             scheme, ctrl = mkscheme()
             before = tr(pinv(CFIM(scheme)))
             Random.seed!(1234)
-            opt = init_opt(ControlOpt(ctrl=ctrl, ctrl_bound=[-10.0, 10.0], seed=1234), scheme)
-            ow = Objective(scheme, obj); out = Output(opt; save=false)
-            @suppress optimize!(opt, PSO(p_num=6, max_episode=[30, 30]), ow, scheme, out)
-            after = out.f_list[end]; clean()
+            opt = init_opt(
+                ControlOpt(ctrl = ctrl, ctrl_bound = [-10.0, 10.0], seed = 1234),
+                scheme,
+            )
+            ow = Objective(scheme, obj);
+            out = Output(opt; save = false)
+            @suppress optimize!(
+                opt,
+                PSO(p_num = 6, max_episode = [30, 30]),
+                ow,
+                scheme,
+                out,
+            )
+            after = out.f_list[end];
+            clean()
             @test after >= limit - 1e-6
             @test after < before
         end
@@ -403,10 +461,15 @@ using Random
             scheme, ctrl = mkscheme()
             before = tr(pinv(CFIM(scheme)))
             Random.seed!(1234)
-            opt = init_opt(ControlOpt(ctrl=ctrl, ctrl_bound=[-10.0, 10.0], seed=1234), scheme)
-            ow = Objective(scheme, obj); out = Output(opt; save=false)
-            @suppress optimize!(opt, DE(p_num=6, max_episode=30), ow, scheme, out)
-            after = out.f_list[end]; clean()
+            opt = init_opt(
+                ControlOpt(ctrl = ctrl, ctrl_bound = [-10.0, 10.0], seed = 1234),
+                scheme,
+            )
+            ow = Objective(scheme, obj);
+            out = Output(opt; save = false)
+            @suppress optimize!(opt, DE(p_num = 6, max_episode = 30), ow, scheme, out)
+            after = out.f_list[end];
+            clean()
             @test after >= limit - 1e-6           # DE converges slowly; bound still holds
             @test after <= before + 1e-9          # non-worsening
         end
@@ -416,16 +479,30 @@ using Random
             # autoGRAPE / AD: multi-parameter CFIM is broken — the autodiff path
             # mutates control buffers, triggering Zygote "Mutating arrays not
             # supported". Known limitation; this guards against silent regressions.
-            opt = ControlOpt(ctrl=ctrl, ctrl_bound=[-10.0, 10.0], seed=1234)
-            @test_throws Exception (@suppress optimize!(scheme, opt;
-                algorithm=autoGRAPE(Adam=true, max_episode=2, epsilon=0.1), objective=obj))
+            opt = ControlOpt(ctrl = ctrl, ctrl_bound = [-10.0, 10.0], seed = 1234)
+            @test_throws Exception (@suppress optimize!(
+                scheme,
+                opt;
+                algorithm = autoGRAPE(Adam = true, max_episode = 2, epsilon = 0.1),
+                objective = obj,
+            ))
             clean()
             # NM (Nelder-Mead) and RI (reverse iterative) have no ControlOpt
             # method — they target StateOpt only.
-            opt2 = init_opt(ControlOpt(ctrl=ctrl, ctrl_bound=[-10.0, 10.0], seed=1234), scheme)
-            ow = Objective(scheme, obj); out = Output(opt2; save=false)
-            @test_throws MethodError optimize!(opt2, NM(p_num=5, max_episode=2), ow, scheme, out)
-            @test_throws MethodError optimize!(opt2, RI(max_episode=2), ow, scheme, out)
+            opt2 = init_opt(
+                ControlOpt(ctrl = ctrl, ctrl_bound = [-10.0, 10.0], seed = 1234),
+                scheme,
+            )
+            ow = Objective(scheme, obj);
+            out = Output(opt2; save = false)
+            @test_throws MethodError optimize!(
+                opt2,
+                NM(p_num = 5, max_episode = 2),
+                ow,
+                scheme,
+                out,
+            )
+            @test_throws MethodError optimize!(opt2, RI(max_episode = 2), ow, scheme, out)
         end
     end
 
@@ -437,24 +514,32 @@ using Random
         gamma_l = 0.1
         decay = [[sz_1, gamma_l]]
         T0 = 1.0
-        tspan = range(0.0, T0; length=30)
+        tspan = range(0.0, T0; length = 30)
         cnum = length(tspan) - 1
 
-        param_nc = Lindblad(H0, dH, tspan, decay; dyn_method=:Expm)
-        scheme_nc = GeneralScheme(probe=probe_ket, param=param_nc, measurement=bell_projs)
+        param_nc = Lindblad(H0, dH, tspan, decay; dyn_method = :Expm)
+        scheme_nc =
+            GeneralScheme(probe = probe_ket, param = param_nc, measurement = bell_projs)
         tr_nc = tr(pinv(CFIM(scheme_nc)))
 
         ctrl = [zeros(cnum) for _ in eachindex(Hc)]
-        param_ctrl = Lindblad(H0, dH, tspan, Hc, decay; ctrl=ctrl, dyn_method=:Expm)
-        scheme_ctrl = GeneralScheme(probe=probe_rho, param=param_ctrl, measurement=bell_projs)
+        param_ctrl = Lindblad(H0, dH, tspan, Hc, decay; ctrl = ctrl, dyn_method = :Expm)
+        scheme_ctrl =
+            GeneralScheme(probe = probe_rho, param = param_ctrl, measurement = bell_projs)
 
         Random.seed!(1234)
-        opt = ControlOpt(ctrl=ctrl, ctrl_bound=[-10.0, 10.0], seed=1234)
-        obj = CFIM_obj(M=bell_projs, para_type=:multi_para)
-        @suppress optimize!(scheme_ctrl, opt; algorithm=GRAPE(Adam=false, max_episode=200, epsilon=0.5),
-                            objective=obj)
+        opt = ControlOpt(ctrl = ctrl, ctrl_bound = [-10.0, 10.0], seed = 1234)
+        obj = CFIM_obj(M = bell_projs, para_type = :multi_para)
+        @suppress optimize!(
+            scheme_ctrl,
+            opt;
+            algorithm = GRAPE(Adam = false, max_episode = 200, epsilon = 0.5),
+            objective = obj,
+        )
         tr_ctrl = tr(pinv(CFIM(scheme_ctrl)))
-        rm("f.csv", force=true); rm("controls.dat", force=true); rm("controls.csv", force=true)
+        rm("f.csv", force = true);
+        rm("controls.dat", force = true);
+        rm("controls.csv", force = true)
 
         @test tr_ctrl < tr_nc
     end
@@ -467,17 +552,17 @@ using Random
         dev_oc = Float64[]   # |controlled − optimum| / optimum
         dev_nc = Float64[]   # |no-control − optimum| / optimum
         for T0 in times
-            tspan = range(0.0, T0; length=100)
+            tspan = range(0.0, T0; length = 100)
             cnum = length(tspan) - 1
             limit = analytic_magnetic_qfim_limit_trinv(T0, B, theta)
 
             ctrl_opt = analytic_magnetic_optimal_ctrl(B, theta, phi, cnum)
-            p_oc = Lindblad(H0, dH, tspan, Hc; ctrl=ctrl_opt, dyn_method=:Expm)
-            s_oc = GeneralScheme(probe=probe_rho, param=p_oc)
+            p_oc = Lindblad(H0, dH, tspan, Hc; ctrl = ctrl_opt, dyn_method = :Expm)
+            s_oc = GeneralScheme(probe = probe_rho, param = p_oc)
             push!(dev_oc, abs(tr(inv(QFIM(s_oc))) - limit) / limit)
 
-            p_nc = Lindblad(H0, dH, tspan; dyn_method=:Expm)
-            s_nc = GeneralScheme(probe=probe_ket, param=p_nc)
+            p_nc = Lindblad(H0, dH, tspan; dyn_method = :Expm)
+            s_nc = GeneralScheme(probe = probe_ket, param = p_nc)
             push!(dev_nc, abs(tr(inv(QFIM(s_nc))) - limit) / limit)
         end
         @test maximum(dev_oc) < 1e-2                  # controlled stays on optimal curve

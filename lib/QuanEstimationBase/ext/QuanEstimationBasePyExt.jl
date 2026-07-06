@@ -8,8 +8,7 @@ using Random
 # Julia → Python: convert ComplexF64 matrices to numpy arrays directly.
 # Without this rule, PythonCall wraps Matrix{ComplexF64} as AnyValue
 # with a ._jl attribute, requiring manual np.array(obj._jl) in Python.
-PythonCall.pyconvert(::Type{Py}, x::AbstractMatrix{ComplexF64}) =
-    PythonCall.PyArray(x)
+PythonCall.pyconvert(::Type{Py}, x::AbstractMatrix{ComplexF64}) = PythonCall.PyArray(x)
 
 QuanEstimationBase.ControlOpt(ctrl::PyList, ctrl_bound::PyList, seed::Py) =
     QuanEstimationBase.ControlOpt(;
@@ -45,7 +44,8 @@ QuanEstimationBase.Lindblad(
     pyconvert(Vector{Float64}, tspan),
     pyconvert(Vector{Matrix{ComplexF64}}, Hc),
     pyconvert(Vector, decay);
-    ctrl = isnothing(ctrl) ? QuanEstimationBase.ZeroCTRL() : pyconvert(Vector{Vector{Float64}}, ctrl),
+    ctrl = isnothing(ctrl) ? QuanEstimationBase.ZeroCTRL() :
+           pyconvert(Vector{Vector{Float64}}, ctrl),
     dyn_method = Symbol(dyn_method),
     kwargs...,
 )
@@ -64,7 +64,8 @@ QuanEstimationBase.Lindblad(
     pyconvert(Vector{Matrix{ComplexF64}}, dH),
     pyconvert(Vector{Float64}, tspan),
     pyconvert(Vector{Matrix{ComplexF64}}, Hc);
-    ctrl = isnothing(ctrl) ? QuanEstimationBase.ZeroCTRL() : pyconvert(Vector{Vector{Float64}}, ctrl),
+    ctrl = isnothing(ctrl) ? QuanEstimationBase.ZeroCTRL() :
+           pyconvert(Vector{Vector{Float64}}, ctrl),
     dyn_method = Symbol(dyn_method),
     kwargs...,
 )
@@ -77,32 +78,32 @@ QuanEstimationBase.Lindblad(
     decay::Union{PyList,Nothing} = nothing,
     dyn_method::String = "Expm",
     kwargs...,
-) = if isnothing(decay)
-    QuanEstimationBase.Lindblad(
-        pyconvert(Matrix{ComplexF64}, H0),
-        pyconvert(Vector{Matrix{ComplexF64}}, dH),
-        pyconvert(Vector{Float64}, tspan);
-        dyn_method = Symbol(dyn_method),
-        kwargs...,
-    )
-else
-    QuanEstimationBase.Lindblad(
-        pyconvert(Matrix{ComplexF64}, H0),
-        pyconvert(Vector{Matrix{ComplexF64}}, dH),
-        pyconvert(Vector{Float64}, tspan),
-        pyconvert(Vector, decay);
-        dyn_method = Symbol(dyn_method),
-        kwargs...,
-    )
-end
+) =
+    if isnothing(decay)
+        QuanEstimationBase.Lindblad(
+            pyconvert(Matrix{ComplexF64}, H0),
+            pyconvert(Vector{Matrix{ComplexF64}}, dH),
+            pyconvert(Vector{Float64}, tspan);
+            dyn_method = Symbol(dyn_method),
+            kwargs...,
+        )
+    else
+        QuanEstimationBase.Lindblad(
+            pyconvert(Matrix{ComplexF64}, H0),
+            pyconvert(Vector{Matrix{ComplexF64}}, dH),
+            pyconvert(Vector{Float64}, tspan),
+            pyconvert(Vector, decay);
+            dyn_method = Symbol(dyn_method),
+            kwargs...,
+        )
+    end
 
 # Kraus: now only takes (K, dK) — probe state passed via GeneralScheme
-QuanEstimationBase.Kraus(K::PyList, dK::PyList; kwargs...) =
-    QuanEstimationBase.Kraus(
-        pyconvert(Vector{Matrix{ComplexF64}}, K),
-        pyconvert(Vector{Vector{Matrix{ComplexF64}}}, dK);
-        kwargs...,
-    )
+QuanEstimationBase.Kraus(K::PyList, dK::PyList; kwargs...) = QuanEstimationBase.Kraus(
+    pyconvert(Vector{Matrix{ComplexF64}}, K),
+    pyconvert(Vector{Vector{Matrix{ComplexF64}}}, dK);
+    kwargs...,
+)
 
 function QuanEstimationBase.expm_py(
     tspan::PyArray,
@@ -114,7 +115,10 @@ function QuanEstimationBase.expm_py(
     Hc::PyList,
     ctrl::PyList,
 )
-    decay = [(pyconvert(Matrix{ComplexF64}, decay_opt[i]), pyconvert(Float64, γ[i])) for i in 1:length(γ)]
+    decay = [
+        (pyconvert(Matrix{ComplexF64}, decay_opt[i]), pyconvert(Float64, γ[i])) for
+        i = 1:length(γ)
+    ]
     return QuanEstimationBase.expm(
         pyconvert(Vector{Float64}, tspan),
         pyconvert(Matrix{ComplexF64}, ρ0),
@@ -192,10 +196,28 @@ function QuanEstimationBase.ode_py(
     if length(dH_jl) == 1 && dH_jl[1] isa AbstractMatrix
         # Single-parameter: delegate to multi-param with dH wrapped in a 1-element vector
         # so that ∂ρt returns Vector{Vector{Matrix}} (consistent with Python post-processing)
-        return QuanEstimationBase.ode_py(tspan_jl, ρ0_jl, H0_jl, [dH_jl[1]], Γ_jl, γ_jl, Hc_jl, ctrl_jl)
+        return QuanEstimationBase.ode_py(
+            tspan_jl,
+            ρ0_jl,
+            H0_jl,
+            [dH_jl[1]],
+            Γ_jl,
+            γ_jl,
+            Hc_jl,
+            ctrl_jl,
+        )
     else
         # Multi-parameter: (tspan, ρ0, H0, dH::AbstractVector, Γ, γ, Hc, ctrl)
-        return QuanEstimationBase.ode_py(tspan_jl, ρ0_jl, H0_jl, dH_jl, Γ_jl, γ_jl, Hc_jl, ctrl_jl)
+        return QuanEstimationBase.ode_py(
+            tspan_jl,
+            ρ0_jl,
+            H0_jl,
+            dH_jl,
+            Γ_jl,
+            γ_jl,
+            Hc_jl,
+            ctrl_jl,
+        )
     end
 end
 
@@ -212,8 +234,7 @@ function QuanEstimationBase.ode_py(
 )
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    ctrl =
-        [repeat(ctrl[i]; inner=ctrl_interval) for i = 1:ctrl_num]
+    ctrl = [repeat(ctrl[i]; inner = ctrl_interval) for i = 1:ctrl_num]
     push!.(ctrl, [0.0 for i = 1:ctrl_num])
     H(ctrl) = Htot(H0, Hc, ctrl)
     dt = tspan[2] - tspan[1]
@@ -255,8 +276,7 @@ function QuanEstimationBase.ode_py(
     param_num = length(dH)
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    ctrl =
-        [repeat(ctrl[i]; inner=ctrl_interval) for i = 1:ctrl_num]
+    ctrl = [repeat(ctrl[i]; inner = ctrl_interval) for i = 1:ctrl_num]
     push!.(ctrl, [0.0 for i = 1:ctrl_num])
     H(ctrl) = Htot(H0, Hc, ctrl)
     dt = tspan[2] - tspan[1]
@@ -291,9 +311,18 @@ end
 
 # DE_deltaphiOpt: Python seed/target -> Julia RNG/Symbol
 QuanEstimationBase.DE_deltaphiOpt(
-    x::PyArray, p::PyArray, rho0::PyArray, comb::PyList,
-    p_num, ini_population::PyList,
-    c, cr, seed, max_episode, target::String, eps,
+    x::PyArray,
+    p::PyArray,
+    rho0::PyArray,
+    comb::PyList,
+    p_num,
+    ini_population::PyList,
+    c,
+    cr,
+    seed,
+    max_episode,
+    target::String,
+    eps,
 ) = QuanEstimationBase.DE_deltaphiOpt(
     pyconvert(Vector{Float64}, x),
     pyconvert(Vector{Float64}, p),
@@ -301,7 +330,8 @@ QuanEstimationBase.DE_deltaphiOpt(
     pyconvert(Vector, comb),
     p_num,
     pyconvert(Vector, ini_population),
-    c, cr,
+    c,
+    cr,
     MersenneTwister(seed |> Int),
     max_episode,
     Symbol(target),
@@ -310,9 +340,19 @@ QuanEstimationBase.DE_deltaphiOpt(
 
 # PSO_deltaphiOpt: Python seed/target -> Julia RNG/Symbol
 QuanEstimationBase.PSO_deltaphiOpt(
-    x::PyArray, p::PyArray, rho0::PyArray, comb::PyList,
-    p_num, ini_particle::PyList,
-    c0, c1, c2, seed, max_episode, target::String, eps,
+    x::PyArray,
+    p::PyArray,
+    rho0::PyArray,
+    comb::PyList,
+    p_num,
+    ini_particle::PyList,
+    c0,
+    c1,
+    c2,
+    seed,
+    max_episode,
+    target::String,
+    eps,
 ) = QuanEstimationBase.PSO_deltaphiOpt(
     pyconvert(Vector{Float64}, x),
     pyconvert(Vector{Float64}, p),
@@ -320,7 +360,9 @@ QuanEstimationBase.PSO_deltaphiOpt(
     pyconvert(Vector, comb),
     p_num,
     pyconvert(Vector, ini_particle),
-    c0, c1, c2,
+    c0,
+    c1,
+    c2,
     MersenneTwister(seed |> Int),
     max_episode,
     Symbol(target),

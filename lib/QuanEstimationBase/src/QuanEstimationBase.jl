@@ -11,11 +11,7 @@ Core computational engine for quantum parameter estimation. Provides:
 """
 module QuanEstimationBase
 
-export GeneralScheme,
-    GeneralEstimation,
-    GeneralMeasurement,
-    GeneralState,
-    AbstractScheme
+export GeneralScheme, GeneralEstimation, GeneralMeasurement, GeneralState, AbstractScheme
 export optimize!, init_opt
 export ControlOpt,
     StateOpt,
@@ -28,7 +24,20 @@ export Copt, Sopt, Mopt, SMopt, CMopt, SCopt, SCMopt
 export Mopt_Projection, Mopt_LinearComb, Mopt_Rotation
 export evolve
 export Lindblad, Hamiltonian, LindbladDynamics, Kraus, QubitDephasing
-export QFIM, CFIM, HCRB, NHB, SLD, SLD_liouville, SLD_qr, FIM, FI_Expt, QFIM_Gauss, QFIM_Bloch, QFIM_Kraus, RLD, LLD
+export QFIM,
+    CFIM,
+    HCRB,
+    NHB,
+    SLD,
+    SLD_liouville,
+    SLD_qr,
+    FIM,
+    FI_Expt,
+    QFIM_Gauss,
+    QFIM_Bloch,
+    QFIM_Kraus,
+    RLD,
+    LLD
 export QFIM_obj, CFIM_obj, HCRB_obj
 export VTB, QVTB, QZZB, BCRB, BQCRB
 export basis, SIC, SpinSqueezing, TargetTime

@@ -10,9 +10,9 @@ Mutable scheme for adaptive Mach-Zehnder interferometer phase estimation.
 - `rho0`: Initial probe state.
 """
 mutable struct Adapt_MZI <: AbstractScheme
-    x::Union{Nothing, AbstractVector}
-    p::Union{Nothing, AbstractVector}
-    rho0::Union{Nothing, AbstractMatrix}
+    x::Union{Nothing,AbstractVector}
+    p::Union{Nothing,AbstractVector}
+    rho0::Union{Nothing,AbstractMatrix}
 end
 
 """
@@ -34,10 +34,8 @@ Uses mutual information as the target for MZI feedback.
 """
 abstract type MI <: MIZtargetType end
 
-const MZI_TARGET_MAP = Dict{Symbol, Type{<:MIZtargetType}}(
-    :sharpness => sharpness,
-    :MI        => MI,
-)
+const MZI_TARGET_MAP =
+    Dict{Symbol,Type{<:MIZtargetType}}(:sharpness => sharpness, :MI => MI)
 
 """
     calculate_online{P}
@@ -62,9 +60,14 @@ Online adaptive phase estimation in the MZI.
 - `target`: Setting the target function for calculating the tunable phase. Options are: "sharpness" and "MI".
 - `output`: Choose the output variables. Options are: "phi" and "dphi".
 """
-function online(apt::Adapt_MZI; target::String = "sharpness", output::String = "phi", res=nothing)
+function online(
+    apt::Adapt_MZI;
+    target::String = "sharpness",
+    output::String = "phi",
+    res = nothing,
+)
     (; x, p, rho0) = apt
-    adaptMZI_online(x, p, rho0, Symbol(output),  Symbol(target); res=res)
+    adaptMZI_online(x, p, rho0, Symbol(output), Symbol(target); res = res)
 end
 
 """
@@ -73,7 +76,7 @@ end
 Core online MZI adaptive estimation loop. Iterates over photon-subtraction steps,
 updates the feedback phase at each episode, and saves results.
 """
-function adaptMZI_online(x, p, rho0, output, target; res=nothing)
+function adaptMZI_online(x, p, rho0, output, target; res = nothing)
     N = Int(sqrt(size(rho0, 1))) - 1
     a = destroy(N + 1) |> sparse
     exp_ix = [exp(1.0im * xi) for xi in x]
@@ -85,7 +88,7 @@ function adaptMZI_online(x, p, rho0, output, target; res=nothing)
     xout, y = [], []
 
     if output == :phi
-        for ei = 1:N-1
+        for ei = 1:(N-1)
             if isnothing(res)
                 println("The tunable phase is $phi ($ei episodes)")
                 print("Please enter the experimental result: ")
@@ -124,7 +127,7 @@ function adaptMZI_online(x, p, rho0, output, target; res=nothing)
         savefile_online(xout, y)
     else
         println("The initial tunable phase is $phi")
-        for ei = 1:N-1
+        for ei = 1:(N-1)
             if isnothing(res)
                 println("The tunable phase is $phi ($ei episodes)")
                 print("Please enter the experimental result: ")
@@ -287,12 +290,12 @@ function offline(
         if isnothing(ini_particle)
             ini_particle = ([apt.rho0],)
         end
-"""
-    PSO_deltaphiOpt(x, p, rho0, comb, p_num, ini_particle, c0, c1, c2, seed::Number, max_episode, target, eps)
+        """
+            PSO_deltaphiOpt(x, p, rho0, comb, p_num, ini_particle, c0, c1, c2, seed::Number, max_episode, target, eps)
 
-Convenience wrapper that converts a numeric `seed` to a `MersenneTwister` RNG and dispatches to the main `PSO_deltaphiOpt`.
-"""
-PSO_deltaphiOpt(
+        Convenience wrapper that converts a numeric `seed` to a `MersenneTwister` RNG and dispatches to the main `PSO_deltaphiOpt`.
+        """
+        PSO_deltaphiOpt(
             x,
             p,
             rho0,
@@ -346,7 +349,15 @@ function DE_deltaphiOpt(
 
     p_fit = [0.0 for i = 1:p_num]
     for pl = 1:N
-        p_fit[pl] = calculate_offline{MZI_TARGET_MAP[target]}(deltaphi[pl], x, p, rho0, a, comb, eps)
+        p_fit[pl] = calculate_offline{MZI_TARGET_MAP[target]}(
+            deltaphi[pl],
+            x,
+            p,
+            rho0,
+            a,
+            comb,
+            eps,
+        )
     end
 
     f_ini = maximum(p_fit)
@@ -378,8 +389,15 @@ function DE_deltaphiOpt(
                 deltaphi_cross[cm] =
                     (x -> x < 0.0 ? 0.0 : x > pi ? pi : x)(deltaphi_cross[cm])
             end
-            f_cross =
-                calculate_offline{MZI_TARGET_MAP[target]}(deltaphi_cross, x, p, rho0, a, comb, eps)
+            f_cross = calculate_offline{MZI_TARGET_MAP[target]}(
+                deltaphi_cross,
+                x,
+                p,
+                rho0,
+                a,
+                comb,
+                eps,
+            )
             if f_cross > p_fit[pm]
                 p_fit[pm] = f_cross
                 for ck = 1:N
@@ -446,7 +464,15 @@ function PSO_deltaphiOpt(
     f_list = []
     for ei = 1:(max_episode[1]-1)
         for pm = 1:p_num
-            f_now = calculate_offline{MZI_TARGET_MAP[target]}(deltaphi[pm], x, p, rho0, a, comb, eps)
+            f_now = calculate_offline{MZI_TARGET_MAP[target]}(
+                deltaphi[pm],
+                x,
+                p,
+                rho0,
+                a,
+                comb,
+                eps,
+            )
             if f_now > p_fit[pm]
                 p_fit[pm] = f_now
                 for ci = 1:N
@@ -507,7 +533,7 @@ function calculate_offline{sharpness}(delta_phi, x, p, rho0, a, comb, eps)
         phi = 0.0
 
         a_res = [Matrix{ComplexF64}(I, (N + 1)^2, (N + 1)^2) for i in eachindex(x)]
-        for ei = 1:N-1
+        for ei = 1:(N-1)
             phi = phi - (-1)^u[ei] * delta_phi[ei]
             for xi in eachindex(x)
                 a_res[xi] = a_res[xi] * a_u(a, x[xi], phi, u[ei])
@@ -538,7 +564,7 @@ function calculate_offline{MI}(delta_phi, x, p, rho0, a, comb, eps)
         phi = 0.0
 
         a_res = [Matrix{ComplexF64}(I, (N + 1)^2, (N + 1)^2) for i in eachindex(x)]
-        for ei = 1:N-1
+        for ei = 1:(N-1)
             phi = phi - (-1)^u[ei] * delta_phi[ei]
             for xi in eachindex(x)
                 a_res[xi] = a_res[xi] * a_u(a, x[xi], phi, u[ei])
@@ -564,7 +590,7 @@ function savefile_offline(deltaphi, flist)
     open("deltaphi.csv", "w") do m
         writedlm(m, deltaphi)
     end
- 
+
     # df = DataFrame(deltaphi = deltaphi)
     # CSV.write("deltaphi.csv", df)
 

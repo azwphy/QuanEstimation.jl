@@ -1,9 +1,7 @@
 using Test
 using LinearAlgebra
 
-using QuanEstimationBase:
-    QubitDephasing,
-    get_dim
+using QuanEstimationBase: QubitDephasing, get_dim
 
 @testset "QubitDephasing" begin
     tspan = range(0.0, 2.0, length = 20)

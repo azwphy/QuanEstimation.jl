@@ -10,7 +10,7 @@ J_+ |j,m\rangle = \sqrt{j(j+1) - m(m+1)} \, |j,m+1\rangle
 ```
 raw"""
 function J₊(j::Number)
-    spdiagm(1 => [sqrt(j * (j + 1) - m * (m + 1)) for m = j:-1:-j][2:end])
+    spdiagm(1 => [sqrt(j * (j + 1) - m * (m + 1)) for m = j:-1:(-j)][2:end])
 end
 
 @doc raw"""
@@ -21,7 +21,7 @@ Construct the collective raising operator ``J_+ = \sum_{i=1}^{N} \sigma_+^{(i)}`
 function Jp_full(N)
     sp = [0.0 1.0; 0.0 0.0]
     Jp, jp_tp = zeros(2^N, 2^N), zeros(2^N, 2^N)
-    for i = 0:N-1
+    for i = 0:(N-1)
         if i == 0
             jp_tp = kron(sp, Matrix(I, 2^(N - 1), 2^(N - 1)))
         elseif i == N - 1
@@ -43,7 +43,7 @@ Construct the collective ``z``-component angular momentum operator ``J_z = \frac
 function Jz_full(N)
     sz = [1.0 0.0; 0.0 -1.0]
     Jz, jz_tp = zeros(2^N, 2^N), zeros(2^N, 2^N)
-    for i = 0:N-1
+    for i = 0:(N-1)
         if i == 0
             jz_tp = kron(sz, Matrix(I, 2^(N - 1), 2^(N - 1)))
         elseif i == N - 1
@@ -79,7 +79,7 @@ function SpinSqueezing(ρ::AbstractMatrix; basis = "Dicke", output = "KU")
         j = (size(ρ, 1) - 1) / 2
         N = 2 * j
         Jp = J₊(j)
-        Jz = spdiagm(j:-1:-j)
+        Jz = spdiagm(j:-1:(-j))
         # Precompute Jx and Jy for Dicke basis
         Jx = 0.5 * (Jp + Jp')
         Jy = -0.5im * (Jp - Jp')
@@ -88,20 +88,22 @@ function SpinSqueezing(ρ::AbstractMatrix; basis = "Dicke", output = "KU")
     end
 
     coef = 4.0 / N
-        
+
     Jx_mean = tr(ρ * Jx) |> real
     Jy_mean = tr(ρ * Jy) |> real
     Jz_mean = tr(ρ * Jz) |> real
 
     if Jx_mean == 0 && Jy_mean == 0
         if Jz_mean == 0
-            throw(ErrorException("The density matrix does not have a valid spin squeezing."))
+            throw(
+                ErrorException("The density matrix does not have a valid spin squeezing."),
+            )
         else
             A = tr(ρ * (Jx * Jx - Jy * Jy))
             B = tr(ρ * (Jx * Jy + Jy * Jx))
             C = tr(ρ * (Jx * Jx + Jy * Jy))
         end
-    else    
+    else
         cosθ = Jz_mean / sqrt(Jx_mean^2 + Jy_mean^2 + Jz_mean^2)
         sinθ = sin(acos(cosθ))
         cosϕ = Jx_mean / sqrt(Jx_mean^2 + Jy_mean^2)
@@ -134,11 +136,11 @@ Calculate the minimum time to reach a precision limit of given level. The `func`
 
 """
 function TargetTime(f::Number, tspan::AbstractVector, func::Function, args...; kwargs...)
-    
+
     # Find the first index where func(t) crosses the target f
     for i in eachindex(tspan)
         f_val = func(tspan[i], args...; kwargs...)
-        
+
         if i == 1
             # Check if we're already at the target at the first time point
             if f_val ≈ f
@@ -147,7 +149,7 @@ function TargetTime(f::Number, tspan::AbstractVector, func::Function, args...; k
         else
             # Get the previous value
             f_prev = func(tspan[i-1], args...; kwargs...)
-            
+
             # Check if we've crossed the target
             if (f_prev ≤ f && f_val ≥ f) || (f_prev ≥ f && f_val ≤ f)
                 # Linear interpolation for more accurate crossing time
@@ -155,19 +157,19 @@ function TargetTime(f::Number, tspan::AbstractVector, func::Function, args...; k
                 t2 = tspan[i]
                 y1 = f_prev
                 y2 = f_val
-                
+
                 # Avoid division by zero
                 if y2 ≈ y1
                     return t1
                 end
-                
+
                 # Calculate the crossing time
                 t_cross = t1 + (f - y1) * (t2 - t1) / (y2 - y1)
                 return t_cross
             end
         end
     end
-    
+
     # If we never cross the target, return the last time point
     println("No time is found in the given time span to reach the target.")
     return nothing
