@@ -38,12 +38,12 @@ function test_nv_analytic_qfim()
     s2 = [0.0 -im 0.0; im 0.0 -im; 0.0 im 0.0] / sqrt(2)
     s3 = [1.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 -1.0]
 
-    D  = 2pi * 2870.0
+    D = 2pi * 2870.0
     gS = 2pi * 28.03
     Bz = 0.5
 
-    H0  = D * (s3 * s3) + gS * Bz * s3
-    dH  = [gS * s3]
+    H0 = D * (s3 * s3) + gS * Bz * s3
+    dH = [gS * s3]
 
     psi0 = [1.0, 0.0, 1.0] / sqrt(2)
     rho0 = psi0 * psi0'

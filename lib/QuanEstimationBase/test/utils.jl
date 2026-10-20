@@ -109,7 +109,7 @@ function generate_NV_dynamics()
     Hc = [S1, S2, S3]
     decay = [[S3, 2 * pi / cons]]
     # Implement basis function locally
-    basis(d, i) = [k for k in 1:d] .== i
+    basis(d, i) = [k for k = 1:d] .== i
     M = [Float64.(basis(dim, i) * basis(dim, i)') for i = 1:dim]
     tspan = range(0.0, 2.0, length = 50)
     cnum = length(tspan) - 1
@@ -133,7 +133,7 @@ end
 function generate_LMG1_dynamics()
     N = 3
     j, theta, phi = N ÷ 2, 0.5pi, 0.5pi
-    Jp = Matrix(spdiagm(1 => [sqrt(j * (j + 1) - m * (m + 1)) for m = j:-1:-j][2:end]))
+    Jp = Matrix(spdiagm(1 => [sqrt(j * (j + 1) - m * (m + 1)) for m = j:-1:(-j)][2:end]))
     Jm = Jp'
     psi =
         exp(0.5 * theta * exp(im * phi) * Jm - 0.5 * theta * exp(-im * phi) * Jp) *
@@ -141,7 +141,7 @@ function generate_LMG1_dynamics()
     lambda, g, h = 1.0, 0.5, 0.1
     Jx = 0.5 * (Jp + Jm)
     Jy = -0.5im * (Jp - Jm)
-    Jz = spdiagm(j:-1:-j)
+    Jz = spdiagm(j:-1:(-j))
     H0 = -lambda * (Jx * Jx + g * Jy * Jy) / N - h * Jz
     dH = [-lambda * Jy * Jy / N]
     decay = [[Jz, 0.1]]
@@ -153,7 +153,7 @@ end
 function generate_LMG2_dynamics()
     N = 3
     j, theta, phi = N ÷ 2, 0.5pi, 0.5pi
-    Jp = Matrix(spdiagm(1 => [sqrt(j * (j + 1) - m * (m + 1)) for m = j:-1:-j][2:end]))
+    Jp = Matrix(spdiagm(1 => [sqrt(j * (j + 1) - m * (m + 1)) for m = j:-1:(-j)][2:end]))
     Jm = Jp'
     psi =
         exp(0.5 * theta * exp(im * phi) * Jm - 0.5 * theta * exp(-im * phi) * Jp) *
@@ -161,7 +161,7 @@ function generate_LMG2_dynamics()
     lambda, g, h = 1.0, 0.5, 0.1
     Jx = 0.5 * (Jp + Jm)
     Jy = -0.5im * (Jp - Jm)
-    Jz = spdiagm(j:-1:-j)
+    Jz = spdiagm(j:-1:(-j))
     H0 = -lambda * (Jx * Jx + g * Jy * Jy) / N + g * Jy^2 / N - h * Jz
     dH = [-lambda * Jy * Jy / N, -Jz]
     decay = [[Jz, 0.1]]
@@ -193,92 +193,101 @@ function generate_bayes()
     c = trapz(x, p_tp)
     p = p_tp / c
     dp = dp_tp / c
-    return (;
-        rho0 = rho0,
-        x = x,
-        p = p,
-        dp = dp,
-        H0_func = H0_func,
-        dH_func = dH_func,
-    )
+    return (; rho0 = rho0, x = x, p = p, dp = dp, H0_func = H0_func, dH_func = dH_func)
 end
 
 function generate_scheme_bayes_singleparameter()
     # Initial state
     rho0 = complex(0.5 * [1.0 1.0; 1.0 1.0])
-    
+
     # Hamiltonian function
     b_val, omega0 = 0.5π, 1.0
     H0_func(x) = 0.5 * b_val * omega0 * (SigmaX() * cos(x) + SigmaZ() * sin(x))
-    
+
     # Derivative of Hamiltonian
     dH_func(x) = [0.5 * b_val * omega0 * (-SigmaX() * sin(x) + SigmaZ() * cos(x))]
-    
+
     # Prior distribution parameters
     x_values = range(-0.5π, 0.5π, length = 100) |> Vector
     mu_val, eta_val = 0.0, 0.2
 
     # Probability density function and its derivative
     prob_density(x, mu, eta) = exp(-(x - mu)^2 / (2 * eta^2)) / (eta * √(2π))
-    d_prob_density(x, mu, eta) = -((x - mu) * exp(-(x - mu)^2 / (2 * eta^2))) / (eta^3 * √(2π))
-    
+    d_prob_density(x, mu, eta) =
+        -((x - mu) * exp(-(x - mu)^2 / (2 * eta^2))) / (eta^3 * √(2π))
+
     prob_values = [prob_density(x, mu_val, eta_val) for x in x_values]
     d_prob_values = [d_prob_density(x, mu_val, eta_val) for x in x_values]
-    
+
     # Normalize the distribution using quadgk 
-    norm_factor, _ = quadgk(x -> prob_density(x, mu_val, eta_val), x_values[1], x_values[end])
+    norm_factor, _ =
+        quadgk(x -> prob_density(x, mu_val, eta_val), x_values[1], x_values[end])
     prob_normalized = prob_values / norm_factor
     d_prob_normalized = d_prob_values / norm_factor
-    
+
     # Time evolution parameters
     tspan = range(0.0, 1.0, length = 50)
     dynamics = Lindblad(H0_func, dH_func, tspan; dyn_method = :Expm)
-    scheme = GeneralScheme(; probe = rho0, param = dynamics, x = x_values, p = prob_normalized, dp = d_prob_normalized)
+    scheme = GeneralScheme(;
+        probe = rho0,
+        param = dynamics,
+        x = x_values,
+        p = prob_normalized,
+        dp = d_prob_normalized,
+    )
     return scheme
-end 
+end
 
 function generate_scheme_bayes_multiparameter()
     # Initial state
     rho0 = complex(0.5 * [1.0 1.0; 1.0 1.0])
-    
+
     # Hamiltonian function
     b_val, omega0 = 0.5π, 1.0
     H0_func(x) = 0.5 * b_val * omega0 * (SigmaX() * cos(x) + SigmaZ() * sin(x))
-    
+
     # Derivative of Hamiltonian
     dH_func(x) = [0.5 * b_val * omega0 * (-SigmaX() * sin(x) + SigmaZ() * cos(x))]
-    
+
     # Prior distribution parameters
     x_values = range(-0.5π, 0.5π, length = 100) |> Vector
     mu_val, eta_val = 0.0, 0.2
 
     # Probability density function and its derivative
     prob_density(x, mu, eta) = exp(-(x - mu)^2 / (2 * eta^2)) / (eta * √(2π))
-    d_prob_density(x, mu, eta) = -((x - mu) * exp(-(x - mu)^2 / (2 * eta^2))) / (eta^3 * √(2π))
-    
+    d_prob_density(x, mu, eta) =
+        -((x - mu) * exp(-(x - mu)^2 / (2 * eta^2))) / (eta^3 * √(2π))
+
     prob_values = [prob_density(x, mu_val, eta_val) for x in x_values]
     d_prob_values = [d_prob_density(x, mu_val, eta_val) for x in x_values]
-    
+
     # Normalize the distribution using quadgk 
-    norm_factor, _ = quadgk(x -> prob_density(x, mu_val, eta_val), x_values[1], x_values[end])
+    norm_factor, _ =
+        quadgk(x -> prob_density(x, mu_val, eta_val), x_values[1], x_values[end])
     prob_normalized = prob_values / norm_factor
     d_prob_normalized = d_prob_values / norm_factor
-    
+
     # Time evolution parameters
     tspan = range(0.0, 1.0, length = 50)
     dynamics = Lindblad(H0_func, dH_func, tspan; dyn_method = :Expm)
-    scheme = GeneralScheme(; probe = rho0, param = dynamics, x = x_values, p = prob_normalized, dp = d_prob_normalized)
+    scheme = GeneralScheme(;
+        probe = rho0,
+        param = dynamics,
+        x = x_values,
+        p = prob_normalized,
+        dp = d_prob_normalized,
+    )
     return scheme
-end 
+end
 
 function generate_scheme_adaptive()
     (; rho0, x, p, dp, H0_func, dH_func) = generate_bayes()
     tspan = range(0.0, stop = 1.0, length = 50)
     dynamics = Lindblad(H0_func, dH_func, tspan; dyn_method = :Expm)
-    strategy = AdaptiveStrategy(x=x, p=p, dp=dp)
+    strategy = AdaptiveStrategy(x = x, p = p, dp = dp)
     scheme = GeneralScheme(; probe = rho0, param = dynamics, strat = strategy)
     return scheme
-end 
+end
 
 function generate_kraus()
     # initial state
@@ -297,21 +306,14 @@ function generate_kraus()
     K_func(u) = [[1 0; 0 sqrt(1-u)], [0 sqrt(u); 0 0]]
     dK_func(u) = [[[0 0; 0 -0.5/sqrt(1-u)]], [[0 0.5/sqrt(u); 0 0]]]
 
-    return (;
-        rho0 = rho0,
-        psi = psi,
-        K = K,
-        dK = dK,
-        K_func = K_func,
-        dK_func = dK_func,
-    )
-end 
+    return (; rho0 = rho0, psi = psi, K = K, dK = dK, K_func = K_func, dK_func = dK_func)
+end
 
 function generate_scheme_kraus()
     (; psi, K, dK) = generate_kraus()
 
     # parameterization process
     kraus = Kraus(K, dK)
-    scheme = GeneralScheme(; probe=psi, param=kraus,)
+    scheme = GeneralScheme(; probe = psi, param = kraus)
     return scheme
 end  # function generate_scheme_kraus

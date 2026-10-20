@@ -67,5 +67,3 @@ optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = true)
 # dynamics = Lindblad(H0, dH, tspan, Hc, decay; dyn_method=:Expm)
 # # run the control optimization problem
 # optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=true)
-
-

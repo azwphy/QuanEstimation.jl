@@ -62,10 +62,8 @@ abstract type Ode <: AbstractDynamicsSolver end
 Mapping from solver symbols `:Expm` and `:Ode` to their corresponding
 abstract solver types [`Expm`](@ref) and [`Ode`](@ref).
 """
-const DYN_METHOD_MAP = Dict{Symbol,Type{<:AbstractDynamicsSolver}}(
-    :Expm => Expm,
-    :Ode  => Ode,
-)
+const DYN_METHOD_MAP =
+    Dict{Symbol,Type{<:AbstractDynamicsSolver}}(:Expm => Expm, :Ode => Ode)
 
 """
     AbstractHamiltonian
@@ -300,7 +298,13 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 )
     p = ham.params
-    return LindbladDynamics{typeof(ham),NonDecay,NonControl,DYN_METHOD_MAP[Symbol(dyn_method)],Some}(
+    return LindbladDynamics{
+        typeof(ham),
+        NonDecay,
+        NonControl,
+        DYN_METHOD_MAP[Symbol(dyn_method)],
+        Some,
+    }(
         LindbladData(ham, tspan),
         p,
     )
@@ -318,13 +322,20 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 ) where {T,D}
     ham = Hamiltonian(H0, dH)
-    return LindbladDynamics{typeof(ham),NonDecay,NonControl,DYN_METHOD_MAP[Symbol(dyn_method)],Nothing}(
+    return LindbladDynamics{
+        typeof(ham),
+        NonDecay,
+        NonControl,
+        DYN_METHOD_MAP[Symbol(dyn_method)],
+        Nothing,
+    }(
         LindbladData(ham, tspan),
         nothing,
     )
 end
 
-Decay, NonControl,
+Decay,
+NonControl,
 """
     Lindblad(ham::Hamiltonian, tspan, decay; dyn_method=:Ode)
 
@@ -337,7 +348,13 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 )
     p = ham.params
-    return LindbladDynamics{typeof(ham),Decay,NonControl,DYN_METHOD_MAP[Symbol(dyn_method)],Some}(
+    return LindbladDynamics{
+        typeof(ham),
+        Decay,
+        NonControl,
+        DYN_METHOD_MAP[Symbol(dyn_method)],
+        Some,
+    }(
         LindbladData(ham, tspan; decay = decay),
         p,
     )
@@ -356,7 +373,13 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 ) where {H,D}
     ham = Hamiltonian(H0, dH)
-    return LindbladDynamics{typeof(ham),Decay,NonControl,DYN_METHOD_MAP[Symbol(dyn_method)],Nothing}(
+    return LindbladDynamics{
+        typeof(ham),
+        Decay,
+        NonControl,
+        DYN_METHOD_MAP[Symbol(dyn_method)],
+        Nothing,
+    }(
         LindbladData(ham, tspan; decay = decay),
         nothing,
     )
@@ -377,7 +400,13 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 ) where {H,D,M<:AbstractMatrix}
     ham = Hamiltonian(H0, dH)
-    return LindbladDynamics{typeof(ham),NonDecay,Control,DYN_METHOD_MAP[Symbol(dyn_method)],Nothing}(
+    return LindbladDynamics{
+        typeof(ham),
+        NonDecay,
+        Control,
+        DYN_METHOD_MAP[Symbol(dyn_method)],
+        Nothing,
+    }(
         LindbladData(ham, tspan; Hc = complex.(Hc), ctrl = init_ctrl(Hc, tspan, ctrl)),
         nothing,
     )
@@ -396,7 +425,13 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 ) where {M<:AbstractMatrix}
     p = ham.params
-    return LindbladDynamics{typeof(ham),NonDecay,Control,DYN_METHOD_MAP[Symbol(dyn_method)],Some}(
+    return LindbladDynamics{
+        typeof(ham),
+        NonDecay,
+        Control,
+        DYN_METHOD_MAP[Symbol(dyn_method)],
+        Some,
+    }(
         LindbladData(ham, tspan; Hc = complex.(Hc), ctrl = init_ctrl(Hc, tspan, ctrl)),
         p,
     )
@@ -418,7 +453,13 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 ) where {H,D,M<:AbstractMatrix}
     ham = Hamiltonian(H0, dH)
-    return LindbladDynamics{typeof(ham),Decay,Control,DYN_METHOD_MAP[Symbol(dyn_method)],Nothing}(
+    return LindbladDynamics{
+        typeof(ham),
+        Decay,
+        Control,
+        DYN_METHOD_MAP[Symbol(dyn_method)],
+        Nothing,
+    }(
         LindbladData(
             ham,
             tspan;
@@ -445,7 +486,13 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 ) where {M<:AbstractMatrix}
     p = ham.params
-    return LindbladDynamics{typeof(ham),Decay,Control,DYN_METHOD_MAP[Symbol(dyn_method)],Some}(
+    return LindbladDynamics{
+        typeof(ham),
+        Decay,
+        Control,
+        DYN_METHOD_MAP[Symbol(dyn_method)],
+        Some,
+    }(
         LindbladData(
             ham,
             tspan;
@@ -468,21 +515,21 @@ init_ctrl(Hc, tspan, ctrl::AbstractVector) = ctrl
 
 Generate an all-zero control sequence: ``c(t) = 0``.
 raw"""
-init_ctrl(Hc, tspan, ::ZeroCTRL) = [zero(tspan[1:end-1]) for _ in eachindex(Hc)]
+init_ctrl(Hc, tspan, ::ZeroCTRL) = [zero(tspan[1:(end-1)]) for _ in eachindex(Hc)]
 @doc raw"""
     init_ctrl(Hc, tspan, ctrl::LinearCTRL)
 
 Generate linear-in-time control coefficients: ``c(t) = k t + c_0``.
 raw"""
 init_ctrl(Hc, tspan, ctrl::LinearCTRL) =
-    [[ctrl.k * t .+ ctrl.c0 for t in tspan[1:end-1]] for _ in eachindex(Hc)]
+    [[ctrl.k * t .+ ctrl.c0 for t in tspan[1:(end-1)]] for _ in eachindex(Hc)]
 @doc raw"""
     init_ctrl(Hc, tspan, ctrl::SineCTRL)
 
 Generate sinusoidal control coefficients: ``c(t) = A \sin(\omega t + \phi)``.
 """
 init_ctrl(Hc, tspan, ctrl::SineCTRL) =
-    [[ctrl.A * sin(ctrl.ω * t .+ ctrl.ϕ) for t in tspan[1:end-1]] for _ in eachindex(Hc)]
+    [[ctrl.A * sin(ctrl.ω * t .+ ctrl.ϕ) for t in tspan[1:(end-1)]] for _ in eachindex(Hc)]
 """
     init_ctrl(Hc, tspan, ctrl::SawCTRL)
 
@@ -491,7 +538,7 @@ Generate sawtooth-wave control coefficients over `tspan`.
 function init_ctrl(Hc, tspan, ctrl::SawCTRL)
     ramp = (tspan[end] - tspan[1]) / ctrl.n
     return [
-        [2 * ctrl.k * (t / ramp - floor(1 / 2 + t / ramp)) for t in tspan[1:end-1]] for
+        [2 * ctrl.k * (t / ramp - floor(1 / 2 + t / ramp)) for t in tspan[1:(end-1)]] for
         _ in eachindex(Hc)
     ]
 end
@@ -505,7 +552,7 @@ function init_ctrl(Hc, tspan, ctrl::TriangleCTRL)
     return [
         [
             2 * abs(2 * ctrl.k * (t / ramp - floor(1 / 2 + t / ramp))) - 1 for
-            t in tspan[1:end-1]
+            t in tspan[1:(end-1)]
         ] for _ in eachindex(Hc)
     ]
 end
@@ -516,7 +563,7 @@ end
 Generate Gaussian-pulse control coefficients: ``c(t) = A \exp(-(t-\mu)^2 / (2\sigma))``, where ``\sigma`` is interpreted as the variance.
 raw"""
 init_ctrl(Hc, tspan, ctrl::GaussianCTRL) = [
-    [ctrl.A * exp(-((t - ctrl.μ)^2) / (2 * ctrl.σ)) for t in tspan[1:end-1]] for
+    [ctrl.A * exp(-((t - ctrl.μ)^2) / (2 * ctrl.σ)) for t in tspan[1:(end-1)]] for
     _ in eachindex(Hc)
 ]
 @doc raw"""
@@ -529,7 +576,7 @@ where ``T`` is the total evolution time and ``\sigma`` is the width parameter.
 init_ctrl(Hc, tspan, ctrl::GaussianEdgeCTRL) = [
     [
         ctrl.A * (1 - exp(-t^2 / ctrl.σ) - exp(-(t - (tspan[end] - tspan[1]))^2 / ctrl.σ)) for
-        t in tspan[1:end-1]
+        t in tspan[1:(end-1)]
     ] for _ in eachindex(Hc)
 ]
 
@@ -539,8 +586,10 @@ init_ctrl(Hc, tspan, ctrl::GaussianEdgeCTRL) = [
 
 Return `:single_para` if the Hamiltonian has exactly one parameter (``N=1``), otherwise `:multi_para`.
 """
-para_type(::LindbladDynamics{Hamiltonian{T,D,1},DC,C,S,P}) where {T,D,DC,C,S,P} = :single_para
-para_type(::LindbladDynamics{Hamiltonian{T,D,N},DC,C,S,P}) where {T,D,N,DC,C,S,P} = :multi_para
+para_type(::LindbladDynamics{Hamiltonian{T,D,1},DC,C,S,P}) where {T,D,DC,C,S,P} =
+    :single_para
+para_type(::LindbladDynamics{Hamiltonian{T,D,N},DC,C,S,P}) where {T,D,N,DC,C,S,P} =
+    :multi_para
 
 """
     get_param_num(::Type{LindbladDynamics{H,D,C,S,P}})
@@ -572,7 +621,7 @@ get_dim(ham::Hamiltonian{H,DH,N}) where {H<:AbstractMatrix,DH,N} = size(ham.H0, 
 
 Return the Hilbert space dimension by evaluating ``H_0`` at an arbitrary argument (function case).
 """
-get_dim(data::Hamiltonian{F,DF,N}) where {F<:Function,DF,N}= size(data.H0(0.0), 1)
+get_dim(data::Hamiltonian{F,DF,N}) where {F<:Function,DF,N} = size(data.H0(0.0), 1)
 """
     get_dim(data::LindbladData)
 

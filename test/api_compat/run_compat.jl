@@ -103,33 +103,42 @@ end
     rho0 = 0.5 * ones(ComplexF64, 2, 2)
 
     dynamics = Lindblad(H0, dH, tspan, decay)
-    scheme = GeneralScheme(; probe=rho0, param=dynamics, measurement=M)
-    rho, drho = expm(tspan, rho0, H0, dH; decay=decay)
+    scheme = GeneralScheme(; probe = rho0, param = dynamics, measurement = M)
+    rho, drho = expm(tspan, rho0, H0, dH; decay = decay)
     rho_T = rho[end]
     drho_T = drho[end]
 
     # error_evaluation with keyword args 
-    @test_nowarn error_evaluation(scheme;
-        objective=:QFIM, input_error_scaling=1e-8, SLD_eps=1e-6)
+    @test_nowarn error_evaluation(
+        scheme;
+        objective = :QFIM,
+        input_error_scaling = 1e-8,
+        SLD_eps = 1e-6,
+    )
 
     # error_control with keyword args
-    @test_nowarn error_control(scheme;
-        objective="QFIM", output_error_scaling=1e-6,
-        input_error_scaling=1e-8, SLD_eps=1e-6, max_episode=1)
+    @test_nowarn error_control(
+        scheme;
+        objective = "QFIM",
+        output_error_scaling = 1e-6,
+        input_error_scaling = 1e-8,
+        SLD_eps = 1e-6,
+        max_episode = 1,
+    )
 
     # QFIM with keyword args
-    @test_nowarn QFIM(rho_T, drho_T; LDtype=:SLD)
-    @test_nowarn QFIM(rho_T, drho_T; LDtype=:RLD)
-    @test_nowarn QFIM(rho_T, drho_T; LDtype=:LLD)
-    @test_nowarn QFIM(rho_T, drho_T; LDtype=:SLD, exportLD=true)
-    @test_nowarn QFIM(rho_T, drho_T; eps=1e-8)
+    @test_nowarn QFIM(rho_T, drho_T; LDtype = :SLD)
+    @test_nowarn QFIM(rho_T, drho_T; LDtype = :RLD)
+    @test_nowarn QFIM(rho_T, drho_T; LDtype = :LLD)
+    @test_nowarn QFIM(rho_T, drho_T; LDtype = :SLD, exportLD = true)
+    @test_nowarn QFIM(rho_T, drho_T; eps = 1e-8)
 
     # CFIM with keyword args
-    @test_nowarn CFIM(rho_T, drho_T, M; eps=1e-8)
+    @test_nowarn CFIM(rho_T, drho_T, M; eps = 1e-8)
     @test_nowarn CFIM(rho_T, drho_T, M)
 
     # HCRB with keyword args (W must be a matrix)
-    @test_nowarn HCRB(rho_T, drho_T, [1.0;;]; eps=1e-8)
+    @test_nowarn HCRB(rho_T, drho_T, [1.0;;]; eps = 1e-8)
 
     # NHB with keyword args (W must be a matrix)
     @test_nowarn NHB(rho_T, drho_T, [1.0;;])
@@ -139,18 +148,39 @@ end
     p_vals = [1/3, 1/3, 1/3]
     rho_list = [rho_T, rho_T, rho_T]
     drho_list = [drho_T, drho_T, drho_T]
-    @test_nowarn BQCRB(x_vals, p_vals, nothing, rho_list, drho_list;
-        b=nothing, db=nothing, btype=1, LDtype=:SLD, eps=1e-8)
+    @test_nowarn BQCRB(
+        x_vals,
+        p_vals,
+        nothing,
+        rho_list,
+        drho_list;
+        b = nothing,
+        db = nothing,
+        btype = 1,
+        LDtype = :SLD,
+        eps = 1e-8,
+    )
 
     # BCRB with keyword args
-    @test_nowarn BCRB(x_vals, p_vals, nothing, rho_list, drho_list;
-        M=nothing, b=nothing, db=nothing, btype=1, eps=1e-8)
+    @test_nowarn BCRB(
+        x_vals,
+        p_vals,
+        nothing,
+        rho_list,
+        drho_list;
+        M = nothing,
+        b = nothing,
+        db = nothing,
+        btype = 1,
+        eps = 1e-8,
+    )
 
     # Bayes & MLE: exist and accept keyword args syntactically
     # (full runtime execution has complex integration/setup requirements;
     #  isdefined checks above already verify function existence)
-    @test hasmethod(Bayes, Tuple{Vector{Float64}, Vector{Float64},
-        Vector{Matrix{ComplexF64}}, Vector{Int64}})
-    @test hasmethod(MLE, Tuple{Vector{Float64}, Vector{Matrix{ComplexF64}},
-        Vector{Int64}})
+    @test hasmethod(
+        Bayes,
+        Tuple{Vector{Float64},Vector{Float64},Vector{Matrix{ComplexF64}},Vector{Int64}},
+    )
+    @test hasmethod(MLE, Tuple{Vector{Float64},Vector{Matrix{ComplexF64}},Vector{Int64}})
 end

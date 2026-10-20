@@ -104,8 +104,9 @@ function scheme_analy(scheme, dim, tnum, para_num, ctrl_num)
     end
 
     for ti = 2:tnum
-        decay_opt, γ = isnothing(decay) ? (Matrix{ComplexF64}[], Float64[]) :
-                       ([d[1] for d in decay], [d[2] for d in decay])
+        decay_opt, γ =
+            isnothing(decay) ? (Matrix{ComplexF64}[], Float64[]) :
+            ([d[1] for d in decay], [d[2] for d in decay])
 
         exp_L = expL(H[ti-1], decay_opt, γ, Δt, ti)
         ρt[ti] = exp_L * ρt[ti-1]
@@ -277,7 +278,7 @@ function gradient_QFIM_analy(alg::GRAPE, obj, scheme)
     dim = get_dim(scheme)
     tnum = length(pdata.tspan)
     para_num = length(pdata.hamiltonian.dH)
-    ctrl_num = get_ctrl_num(scheme) 
+    ctrl_num = get_ctrl_num(scheme)
 
     ρt_T, ∂ρt_T, δρt_δV, ∂xδρt_δV = scheme_analy(scheme, dim, tnum, para_num, ctrl_num)
 
@@ -367,7 +368,7 @@ function gradient_CFIM_analy(alg, obj, scheme)
                 pdata.ctrl[cm][tm] = pdata.ctrl[cm][tm] + alg.epsilon * δF
             end
         end
-    #     end
+        #     end
     else
         F_T = CFIM(ρt_T, ∂ρt_T, obj.M; eps = obj.eps)
         L1_tidle = [zeros(ComplexF64, dim, dim) for i = 1:para_num]

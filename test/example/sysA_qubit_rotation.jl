@@ -7,7 +7,7 @@ using QuanEstimationBase
     for t in [0.1, 0.5, 1.0, 2.0]
         rho, drho, F_exact = analytic_sysA(t, omega)
 
-        F_sld = QFIM(rho, drho; LDtype=:SLD)
+        F_sld = QFIM(rho, drho; LDtype = :SLD)
         @test F_sld[1] ≈ F_exact rtol=1e-10
 
         F_pure = QuanEstimationBase.QFIM_pure(rho, drho)
