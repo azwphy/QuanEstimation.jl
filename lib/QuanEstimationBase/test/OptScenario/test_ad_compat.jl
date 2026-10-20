@@ -36,7 +36,7 @@ function test_rrule_sld_pullback()
     @test ishermitian(L) || norm(L - L') < 1e-10
     L̄ = rand_ρ(2)
     fresult = pb(L̄)
-    @test fresult isa NTuple{3, Any}
+    @test fresult isa NTuple{3,Any}
 end
 
 @testset "test_ad_compat" begin

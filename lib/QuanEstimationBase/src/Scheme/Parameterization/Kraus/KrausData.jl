@@ -8,8 +8,8 @@ Stores Kraus operators and their derivatives for parameterized dynamics.
 - `dK`: Derivatives of the Kraus operators with respect to the estimated parameters.
 raw"""
 mutable struct KrausData <: AbstractKrausData
-    K
-    dK
+    K::Any
+    dK::Any
 end
 
 
@@ -25,7 +25,7 @@ The Kraus channel is ``\rho = \sum_i K_i \rho_0 K_i^\dagger``.
 - `dK::AbstractVector`: Vector of vectors, where ``dK[a]`` contains the derivatives ``\partial_a K_i`` with respect to parameter ``a``.
 """
 Kraus(K::KT, dK::DKT) where {KT<:AbstractVector,DKT<:AbstractVector} =
-    Kraus{KT,DKT,length(K),length(dK[1]),}(KrausData(K, dK), nothing)
+    Kraus{KT,DKT,length(K),length(dK[1])}(KrausData(K, dK), nothing)
 
 @doc raw"""
     Kraus(K::Function, dK::Function, params::Number)
@@ -66,8 +66,8 @@ Construct Kraus dynamics from a function returning operators, without pre-specif
 - `dK::Function`: Function ``dK(\boldsymbol{x})`` returning the derivative vector.
 raw"""
 Kraus(K::KT, dK::DKT) where {KT<:Function,DKT<:Function} =
-    Kraus{KT,DKT,Nothing,Nothing}(KrausData(K, dK),nothing)
-    
+    Kraus{KT,DKT,Nothing,Nothing}(KrausData(K, dK), nothing)
+
 @doc raw"""
     evaluate_kraus(k::Kraus)
 
@@ -82,7 +82,8 @@ The evolved density matrix is ``\rho = \sum_i K_i \rho_0 K_i^\dagger``.
 - `K`: Vector of Kraus operator matrices.
 - `dK`: Vector of derivative vectors ``\partial_a K_i``.
 """
-evaluate_kraus(k::Kraus{KT, DKT}) where {KT<:AbstractVector,DKT<:AbstractVector}= k.data.K, k.data.dK
+evaluate_kraus(k::Kraus{KT,DKT}) where {KT<:AbstractVector,DKT<:AbstractVector} =
+    k.data.K, k.data.dK
 evaluate_kraus(k::Kraus) = k.data.K(k.params...), k.data.dK(k.params...)
 
 """

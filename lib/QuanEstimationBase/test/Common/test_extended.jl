@@ -2,11 +2,7 @@ using Test
 using LinearAlgebra
 
 using QuanEstimationBase:
-    BellState,
-    PlusState,
-    MinusState,
-    SigmaX, SigmaY, SigmaZ,
-    σx, σy, σz
+    BellState, PlusState, MinusState, SigmaX, SigmaY, SigmaZ, σx, σy, σz
 
 @testset "BellState" begin
     @test BellState() == BellState(1)

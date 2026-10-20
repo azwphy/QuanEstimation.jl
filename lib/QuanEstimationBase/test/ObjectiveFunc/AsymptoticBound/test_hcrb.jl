@@ -13,7 +13,7 @@ function test_hcrb()
     decay = [[kron(sz, I(2)), 0.05], [kron(I(2), sz), 0.05]]
     W = one(zeros(2, 2))
     tspan = range(0.0, 5.0, length = 20)
-    rho, drho = QuanEstimationBase.expm(tspan, rho0, H0, dH; decay=decay)
+    rho, drho = QuanEstimationBase.expm(tspan, rho0, H0, dH; decay = decay)
 
     f_HCRB, f_QFIM = Float64[], Float64[]
     for ti = 2:length(tspan)
