@@ -3,18 +3,8 @@ using LinearAlgebra
 using Suppressor: @suppress
 using Random
 
-using QuanEstimationBase: 
-    Lindblad,
-    GeneralScheme,
-    QFIM_obj,
-    QFIM,
-    StateOpt,
-    AD,
-    optimize!,
-    PSO,
-    DE,
-    NM,
-    RI
+using QuanEstimationBase:
+    Lindblad, GeneralScheme, QFIM_obj, QFIM, StateOpt, AD, optimize!, PSO, DE, NM, RI
 
 
 function test_sopt_qfi(; savefile = false)
@@ -31,8 +21,8 @@ function test_sopt_qfi(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
 
     f1 = QFIM(scheme)[1]
-    @test f1 >= f0 || isapprox(f1, f0; atol=1e-5)
-    
+    @test f1 >= f0 || isapprox(f1, f0; atol = 1e-5)
+
     # Ensure cleanup happens even if tests fail
     try
         isfile("f.csv") && rm("f.csv")
@@ -43,11 +33,17 @@ function test_sopt_qfi(; savefile = false)
 
     # Test other algorithms
     for alg in [
-        PSO(p_num=3, max_episode=[3, 3]),
-        DE(p_num=3, max_episode=3),
-        NM(p_num=5, max_episode=3)
+        PSO(p_num = 3, max_episode = [3, 3]),
+        DE(p_num = 3, max_episode = 3),
+        NM(p_num = 5, max_episode = 3),
     ]
-        @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+        @suppress optimize!(
+            scheme,
+            opt;
+            algorithm = alg,
+            objective = obj,
+            savefile = savefile,
+        )
         f_post = QFIM(scheme)[1]
         @test isfinite(f_post)
         try
@@ -61,7 +57,7 @@ function test_sopt_qfi(; savefile = false)
     # Test RI algorithm separately
     alg = RI()
     scheme = generate_scheme_kraus()
-    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
     f_post = tr(QFIM(scheme))
     @test isfinite(f_post)
     @test f_post > 0
@@ -87,8 +83,8 @@ function test_sopt_qfim(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
 
     f1 = tr(pinv(QFIM(scheme)))
-    @test f1 <= f0 || isapprox(f1, f0; atol=1e-5)
-    
+    @test f1 <= f0 || isapprox(f1, f0; atol = 1e-5)
+
     try
         isfile("f.csv") && rm("f.csv")
         isfile("states.dat") && rm("states.dat")
@@ -99,11 +95,17 @@ function test_sopt_qfim(; savefile = false)
 
     # Test other algorithms
     for alg in [
-        PSO(p_num=3, max_episode=[3, 3]),
-        DE(p_num=3, max_episode=3),
-        NM(p_num=5, max_episode=3)
+        PSO(p_num = 3, max_episode = [3, 3]),
+        DE(p_num = 3, max_episode = 3),
+        NM(p_num = 5, max_episode = 3),
     ]
-        @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+        @suppress optimize!(
+            scheme,
+            opt;
+            algorithm = alg,
+            objective = obj,
+            savefile = savefile,
+        )
         f_post = QFIM(scheme)[1]
         @test isfinite(f_post)
         try
@@ -130,8 +132,8 @@ function test_sopt_cfi(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
 
     f1 = CFIM(scheme)[1]
-    @test f1 >= f0 || isapprox(f1, f0; atol=1e-5)
-    
+    @test f1 >= f0 || isapprox(f1, f0; atol = 1e-5)
+
     try
         isfile("f.csv") && rm("f.csv")
         isfile("states.dat") && rm("states.dat")
@@ -142,11 +144,17 @@ function test_sopt_cfi(; savefile = false)
 
     # Test other algorithms
     for alg in [
-        PSO(p_num=3, max_episode=[3, 3]),
-        DE(p_num=3, max_episode=3),
-        NM(p_num=5, max_episode=3)
+        PSO(p_num = 3, max_episode = [3, 3]),
+        DE(p_num = 3, max_episode = 3),
+        NM(p_num = 5, max_episode = 3),
     ]
-        @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+        @suppress optimize!(
+            scheme,
+            opt;
+            algorithm = alg,
+            objective = obj,
+            savefile = savefile,
+        )
         f_post = QFIM(scheme)[1]
         @test isfinite(f_post)
         try
@@ -173,8 +181,8 @@ function test_sopt_cfim(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
 
     f1 = LinearAlgebra.tr(pinv(CFIM(scheme)))
-    @test f1 <= f0 || isapprox(f1, f0; atol=1e-5)
-    
+    @test f1 <= f0 || isapprox(f1, f0; atol = 1e-5)
+
     try
         isfile("f.csv") && rm("f.csv")
         isfile("states.dat") && rm("states.dat")
@@ -185,11 +193,17 @@ function test_sopt_cfim(; savefile = false)
 
     # Test other algorithms
     for alg in [
-        PSO(p_num=3, max_episode=[3, 3]),
-        DE(p_num=3, max_episode=3),
-        NM(p_num=5, max_episode=3)
+        PSO(p_num = 3, max_episode = [3, 3]),
+        DE(p_num = 3, max_episode = 3),
+        NM(p_num = 5, max_episode = 3),
     ]
-        @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+        @suppress optimize!(
+            scheme,
+            opt;
+            algorithm = alg,
+            objective = obj,
+            savefile = savefile,
+        )
         f_post = QFIM(scheme)[1]
         @test isfinite(f_post)
         try
@@ -208,7 +222,7 @@ function test_sopt_kraus_cfi(; savefile = false)
     obj = CFIM_obj()
     opt = StateOpt(seed = 1234)
     alg = RI()
-    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
     f_post = tr(CFIM(scheme))
     @test isfinite(f_post)
     @test f_post > 0
@@ -224,12 +238,12 @@ function test_sopt_nm_qubit_ode()
     (; tspan, rho0, H0, dH, decay) = generate_qubit_dynamics()
     psi = rho0[:, 1] / norm(rho0[:, 1])
     for dyn_method in (:Expm, :Ode)
-        dynamics = Lindblad(H0, dH, tspan, decay; dyn_method=dyn_method)
-        scheme = GeneralScheme(; probe=psi, param=dynamics)
+        dynamics = Lindblad(H0, dH, tspan, decay; dyn_method = dyn_method)
+        scheme = GeneralScheme(; probe = psi, param = dynamics)
         obj = QFIM_obj()
-        opt = StateOpt(psi=psi, seed=1234)
-        alg = NM(p_num=5, max_episode=3)
-        @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=false)
+        opt = StateOpt(psi = psi, seed = 1234)
+        alg = NM(p_num = 5, max_episode = 3)
+        @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = false)
         f_post = QFIM(scheme)[1]
         @test isfinite(f_post)
         @test f_post > 0

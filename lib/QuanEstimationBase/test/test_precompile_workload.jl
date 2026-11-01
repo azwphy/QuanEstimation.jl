@@ -59,12 +59,7 @@ end
     @test length(coefficients) == 8
     @test all(isfinite, coefficients)
 
-    initial_opt = MeasurementOpt(;
-        mtype = :LC,
-        POVM_basis = SIC(2),
-        M_num = 2,
-        seed = 42,
-    )
+    initial_opt = MeasurementOpt(; mtype = :LC, POVM_basis = SIC(2), M_num = 2, seed = 42)
     QEB.init_opt(initial_opt, QEB._pcw_lindblad_scheme())
     @test !isapprox(coefficients, reduce(vcat, initial_opt.B))
 end

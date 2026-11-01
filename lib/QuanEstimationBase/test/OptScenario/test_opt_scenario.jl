@@ -34,7 +34,7 @@ end
 function test_opt_Mopt_Projection()
     M = QuanEstimationBase.SIC(2)
     seed = 1234
-    opt = MeasurementOpt(; mtype = :Projection,M = M, seed = seed)
+    opt = MeasurementOpt(; mtype = :Projection, M = M, seed = seed)
     @test opt.M == M
     @test opt.rng == MersenneTwister(seed)
 end
@@ -65,7 +65,7 @@ function test_opt_StateControlOpt()
     ctrl = [1, 2, 3]
     ctrl_bound = [-1, 1]
     seed = 1234
-    opt = StateControlOpt(psi=psi, ctrl=ctrl, ctrl_bound=ctrl_bound, seed=seed)
+    opt = StateControlOpt(psi = psi, ctrl = ctrl, ctrl_bound = ctrl_bound, seed = seed)
     @test opt.psi == psi
     @test opt.ctrl == ctrl
     @test opt.ctrl_bound == ctrl_bound
@@ -78,7 +78,7 @@ function test_opt_ControlMeasurementOpt()
     M = [0.5, 0.5]
     ctrl_bound = [-1, 1]
     seed = 1234
-    opt = ControlMeasurementOpt(ctrl=ctrl, M=M, ctrl_bound=ctrl_bound, seed=seed)
+    opt = ControlMeasurementOpt(ctrl = ctrl, M = M, ctrl_bound = ctrl_bound, seed = seed)
     @test opt.ctrl == ctrl
     @test opt.M == M
     @test opt.ctrl_bound == ctrl_bound
@@ -90,7 +90,7 @@ function test_opt_StateMeasurementOpt()
     psi = [0.5, 0.5]
     M = [0.5, 0.5]
     seed = 1234
-    opt = StateMeasurementOpt(psi=psi, M=M, seed=seed)
+    opt = StateMeasurementOpt(psi = psi, M = M, seed = seed)
     @test opt.psi == psi
     @test opt.M == M
     @test opt.rng == MersenneTwister(seed)
@@ -103,7 +103,13 @@ function test_opt_StateControlMeasurementOpt()
     M = [0.5, 0.5]
     ctrl_bound = [-1, 1]
     seed = 1234
-    opt = StateControlMeasurementOpt(psi=psi, ctrl=ctrl, M=M, ctrl_bound=ctrl_bound, seed=seed)
+    opt = StateControlMeasurementOpt(
+        psi = psi,
+        ctrl = ctrl,
+        M = M,
+        ctrl_bound = ctrl_bound,
+        seed = seed,
+    )
     @test opt.psi == psi
     @test opt.ctrl == ctrl
     @test opt.M == M

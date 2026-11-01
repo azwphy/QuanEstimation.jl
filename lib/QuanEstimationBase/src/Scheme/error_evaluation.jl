@@ -96,7 +96,11 @@ function SLD_eps_error(scheme, eps)
     return δF
 end
 
-function _sld_with_error(ρ::Matrix{T}, dρ::Matrix{T}; spec::PrecisionSpec) where {T<:Complex}
+function _sld_with_error(
+    ρ::Matrix{T},
+    dρ::Matrix{T};
+    spec::PrecisionSpec,
+) where {T<:Complex}
     sol = _sld_solve(ρ, dρ; spec = spec)
     return sol.L, sol.L + sol.L_dropped
 end
@@ -121,9 +125,7 @@ function QFIM_with_error(scheme::Scheme; verbose::Bool = false, eps = nothing)
     sols = [_sld_solve(rho, x; spec = spec) for x in drho]
     Ls = [s.L for s in sols]
     Ls_all = [s.L + s.L_dropped for s in sols]
-    F = [
-        real(tr(0.5 * rho * (Ls[i] * Ls[j] + Ls[j] * Ls[i]))) for i = 1:p_num, j = 1:p_num
-    ]
+    F = [real(tr(0.5 * rho * (Ls[i] * Ls[j] + Ls[j] * Ls[i]))) for i = 1:p_num, j = 1:p_num]
     F_all = [
         real(tr(0.5 * rho * (Ls_all[i] * Ls_all[j] + Ls_all[j] * Ls_all[i]))) for
         i = 1:p_num, j = 1:p_num
@@ -154,7 +156,11 @@ function SLD_with_error(ρ::Matrix{T}, dρ::Matrix{T}; eps = nothing) where {T<:
     return _sld_with_error(ρ, dρ; spec = spec)
 end
 
-function SLD_with_error(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = nothing) where {T<:Complex}
+function SLD_with_error(
+    ρ::Matrix{T},
+    dρ::Vector{Matrix{T}};
+    eps = nothing,
+) where {T<:Complex}
     Base.depwarn(
         "`SLD_with_error` is deprecated; use `SLD(ρ, dρ; guard=..., tol=..., " *
         "diagnostics=true)` instead.",

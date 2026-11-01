@@ -48,7 +48,7 @@ end
     y = [rand() >= 0.5 ? 0 : 1 for _ = 1:500]
     pout, xout = QuanEstimationBase.Bayes([x], p, rho, y, M = M, savefile = false)
     pout_vec = pout[:]
-    @test isapprox(sum(pout_vec) * (x[end] - x[1]) / (length(x) - 1), 1.0, rtol=1e-2)
+    @test isapprox(sum(pout_vec) * (x[end] - x[1]) / (length(x) - 1), 1.0, rtol = 1e-2)
 end
 
 # Bayesian estimation

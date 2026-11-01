@@ -193,7 +193,8 @@ function _sld_solve(
     λmin⁺ = isempty(positive) ? ss.λmax : minimum(positive)
     κ = ss.λmax / max(λmin⁺, floatmin(Float64))
     input_prop =
-        ss.sep > 0 ? (spec.input_error * (opnorm(σh) + opnorm(ss.ρh) * opnorm(L))) / ss.sep : Inf
+        ss.sep > 0 ?
+        (spec.input_error * (opnorm(σh) + opnorm(ss.ρh) * opnorm(L))) / ss.sep : Inf
     diag = NumericalDiagnostics(
         :SLD;
         precision_layer = layer,
@@ -366,21 +367,25 @@ function _qfim_sld_solve(
             δρ = spec.input_error * opnorm(ρ)
             bound = 2 * opnorm(Ls[a]) * δσ
             bound +=
-                δρ *
-                (opnorm(Ls[a]) * opnorm(Ls[b]) + 2 * sqrt(abs(F[a, a])) * opnorm(Ls[b]) +
-                 2 * sqrt(abs(F[b, b])) * opnorm(Ls[a]))
+                δρ * (
+                    opnorm(Ls[a]) * opnorm(Ls[b]) +
+                    2 * sqrt(abs(F[a, a])) * opnorm(Ls[b]) +
+                    2 * sqrt(abs(F[b, b])) * opnorm(Ls[a])
+                )
             input_prop = max(input_prop, bound)
         end
     end
     flags = _untracked() do
         f = Symbol[]
-        all(:nonfinite_solution in s.diag.flags for s in sols) && push!(f, :nonfinite_solution)
+        all(:nonfinite_solution in s.diag.flags for s in sols) &&
+            push!(f, :nonfinite_solution)
         any(:rank_change_suspected in s.diag.flags for s in sols) &&
             push!(f, :rank_change_suspected)
         trunc > spec.tol * max(opnorm(F), 1.0) && push!(f, :truncation_nonnegligible)
         unique(f)
     end
-    layer = all(s.diag.precision_layer === :compensated for s in sols) ? :compensated : :float64
+    layer =
+        all(s.diag.precision_layer === :compensated for s in sols) ? :compensated : :float64
     diag = NumericalDiagnostics(
         :QFIM;
         precision_layer = layer,
@@ -476,7 +481,8 @@ function _cfim_solve(
         upper_bound = ub,
         deleted_mass = deleted_mass,
         flags = flags,
-        bottleneck = deleted_count > 0 ? :truncation : (input_prop > 0 ? :input_data : :none),
+        bottleneck = deleted_count > 0 ? :truncation :
+                     (input_prop > 0 ? :input_data : :none),
     )
     return CFIMSolution(F, diag)
 end
@@ -634,7 +640,13 @@ function ChainRulesCore.rrule(
     guard = nothing,
     refine = true,
 ) where {T<:Complex}
-    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard, refine = refine)
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        refine = refine,
+    )
     sol = _sld_solve(ρ, dρ; spec = spec)
     L = sol.L
     D = sol.L_dropped
@@ -653,8 +665,7 @@ function ChainRulesCore.rrule(
         end
     end
     ill_posed =
-        km > spec.tol * max(1.0, opnorm(dρh)) ||
-        (:nonfinite_solution in sol.diag.flags)
+        km > spec.tol * max(1.0, opnorm(dρh)) || (:nonfinite_solution in sol.diag.flags)
     trunc_dominant =
         sol.diag.dropped_fisher_mass > 0.1 * max(abs(real(tr(ρ * L * L))), 1.0) ||
         (:rank_change_suspected in sol.diag.flags)
@@ -706,7 +717,10 @@ function ChainRulesCore.rrule(
             X̂ = ss.vec' * X * ss.vec
             L̂ = ss.vec' * L * ss.vec
             Ŵ = ss.vec' * ((Lb + Lb') / 2) * ss.vec
-            m = [ss.λ[i] + ss.λ[j] > ss.τ ? 1.0 : 0.0 for i in axes(ss.λ, 1), j in axes(ss.λ, 1)]
+            m = [
+                ss.λ[i] + ss.λ[j] > ss.τ ? 1.0 : 0.0 for
+                i in axes(ss.λ, 1), j in axes(ss.λ, 1)
+            ]
             mŴ = m .* Ŵ
             A = L̂ * Ŵ - Ŵ * L̂ + mŴ * X̂ - X̂ * mŴ
             Λd = ss.λ .- ss.λ'
@@ -768,8 +782,11 @@ is inverted via `pinv` with relative tolerance `eps`.
 - [`SLD_qr`](@ref): Liouville-space SLD via QR decomposition.
 """
 function SLD_liouville(ρ::Matrix{T}, ∂ρ_∂x::Matrix{T}; eps = nothing) where {T<:Complex}
-    rtol = eps === nothing ? default_guard(Float64) : max(Float64(eps), default_guard(Float64))
-    2 * pinv(kron(ρ |> transpose, ρ |> one) + kron(ρ |> one, ρ), rtol = rtol) * vec(∂ρ_∂x) |> vec2mat
+    rtol =
+        eps === nothing ? default_guard(Float64) : max(Float64(eps), default_guard(Float64))
+    2 *
+    pinv(kron(ρ |> transpose, ρ |> one) + kron(ρ |> one, ρ), rtol = rtol) *
+    vec(∂ρ_∂x) |> vec2mat
 end
 
 """
@@ -832,7 +849,8 @@ Same Liouville-space equation as [`SLD_liouville`](@ref):
 - [`SLD`](@ref): Standard SLD via eigenbasis decomposition.
 raw"""
 function SLD_qr(ρ::Matrix{T}, ∂ρ_∂x::Matrix{T}) where {T<:Complex}
-    2 * (qr(kron(ρ |> transpose, ρ |> one) + kron(ρ |> one, ρ), ColumnNorm()) \ vec(∂ρ_∂x)) |>
+    2 *
+    (qr(kron(ρ |> transpose, ρ |> one) + kron(ρ |> one, ρ), ColumnNorm()) \ vec(∂ρ_∂x)) |>
     vec2mat
 end
 
@@ -907,7 +925,13 @@ function RLD(
     if rep != "original" && rep != "eigen"
         throw(ArgumentError("The rep should be chosen in {'original', 'eigen'}."))
     end
-    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard, work_type = eltype(real(ρ)))
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        work_type = eltype(real(ρ)),
+    )
     sol = _rld_solve(ρ, dρ; spec = spec, label = "the parameter")
     R = sol.R
     if rep == "eigen"
@@ -996,7 +1020,15 @@ function LLD(
         )
         return R', diag
     end
-    return RLD(ρ, dρ; rep = rep, eps = eps, tol = tol, input_error = input_error, guard = guard)'
+    return RLD(
+        ρ,
+        dρ;
+        rep = rep,
+        eps = eps,
+        tol = tol,
+        input_error = input_error,
+        guard = guard,
+    )'
 end
 
 
@@ -1083,7 +1115,15 @@ function QFIM_SLD(
         end
         return F, diag
     end
-    L = SLD(ρ, dρ; eps = eps, tol = tol, input_error = input_error, guard = guard, refine = refine)
+    L = SLD(
+        ρ,
+        dρ;
+        eps = eps,
+        tol = tol,
+        input_error = input_error,
+        guard = guard,
+        refine = refine,
+    )
     F = real(tr(ρ * L * L))
     return F
 end
@@ -1130,7 +1170,14 @@ function QFIM_RLD(
     refine = true,
     diagnostics = false,
 ) where {T<:Complex}
-    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard, refine = refine, work_type = eltype(real(ρ)))
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        refine = refine,
+        work_type = eltype(real(ρ)),
+    )
     sol = _rld_solve(ρ, dρ; spec = spec, label = "the parameter")
     F = real(tr(ρ * sol.R * sol.R'))
     return diagnostics ? (F, sol.diag) : F
@@ -1180,7 +1227,14 @@ function QFIM_LLD(
     refine = true,
     diagnostics = false,
 ) where {T<:Complex}
-    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard, refine = refine, work_type = eltype(real(ρ)))
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        refine = refine,
+        work_type = eltype(real(ρ)),
+    )
     sol = _rld_solve(ρ, dρ; spec = spec, label = "the parameter")
     F = real(tr(ρ * sol.R * sol.R'))
     return diagnostics ? (F, sol.diag) : F
@@ -1285,8 +1339,21 @@ function QFIM_SLD(
         return F, diag
     end
     p_num = length(dρ)
-    LD_tp = [SLD(ρ, x; eps = eps, tol = tol, input_error = input_error, guard = guard, refine = refine) for x in dρ]
-    return [real(tr(0.5 * ρ * (LD_tp[i] * LD_tp[j] + LD_tp[j] * LD_tp[i]))) for i = 1:p_num, j = 1:p_num]
+    LD_tp = [
+        SLD(
+            ρ,
+            x;
+            eps = eps,
+            tol = tol,
+            input_error = input_error,
+            guard = guard,
+            refine = refine,
+        ) for x in dρ
+    ]
+    return [
+        real(tr(0.5 * ρ * (LD_tp[i] * LD_tp[j] + LD_tp[j] * LD_tp[i]))) for
+        i = 1:p_num, j = 1:p_num
+    ]
 end
 
 @doc raw"""
@@ -1334,13 +1401,23 @@ function QFIM_RLD(
     diagnostics = false,
 ) where {T<:Complex}
     p_num = length(dρ)
-    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard, refine = refine, work_type = eltype(real(ρ)))
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        refine = refine,
+        work_type = eltype(real(ρ)),
+    )
     Rs = [_rld_solve(ρ, dρ[i]; spec = spec, label = "parameter $i").R for i = 1:p_num]
     F = [tr(ρ * Rs[i] * Rs[j]') for i = 1:p_num, j = 1:p_num]
     diag = NumericalDiagnostics(
         :QFIM;
         branch = :RLD,
-        spectral_floor = spectral_floor(spec, maximum(abs, eigvals(Hermitian((ρ + ρ') / 2)))),
+        spectral_floor = spectral_floor(
+            spec,
+            maximum(abs, eigvals(Hermitian((ρ + ρ') / 2))),
+        ),
     )
     return diagnostics ? (F, diag) : F
 end
@@ -1390,13 +1467,23 @@ function QFIM_LLD(
     diagnostics = false,
 ) where {T<:Complex}
     p_num = length(dρ)
-    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard, refine = refine, work_type = eltype(real(ρ)))
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        refine = refine,
+        work_type = eltype(real(ρ)),
+    )
     Rs = [_rld_solve(ρ, dρ[i]; spec = spec, label = "parameter $i").R for i = 1:p_num]
     F = [tr(ρ * Rs[i] * Rs[j]') for i = 1:p_num, j = 1:p_num]
     diag = NumericalDiagnostics(
         :QFIM;
         branch = :LLD,
-        spectral_floor = spectral_floor(spec, maximum(abs, eigvals(Hermitian((ρ + ρ') / 2)))),
+        spectral_floor = spectral_floor(
+            spec,
+            maximum(abs, eigvals(Hermitian((ρ + ρ') / 2))),
+        ),
     )
     return diagnostics ? (F, diag) : F
 end
@@ -1439,7 +1526,9 @@ which is valid for pure states, then the symmetric trace formula is used.
 function QFIM_pure(ρ::Matrix{T}, ∂ρ_∂x::Vector{Matrix{T}}) where {T<:Complex}
     p_num = length(∂ρ_∂x)
     sld = [2 * ∂ρ_∂x[i] for i = 1:p_num]
-    return [real(tr(0.5 * ρ * (sld[i] * sld[j] + sld[j] * sld[i]))) for i in 1:p_num, j in 1:p_num]
+    return [
+        real(tr(0.5 * ρ * (sld[i] * sld[j] + sld[j] * sld[i]))) for i = 1:p_num, j = 1:p_num
+    ]
 end
 
 #======================================================#
@@ -1464,7 +1553,13 @@ function CFIM(
     guard = nothing,
     diagnostics = false,
 ) where {T<:Complex}
-    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard, work_type = eltype(real(ρ)))
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        work_type = eltype(real(ρ)),
+    )
     sol = _cfim_solve(ρ, dρ, M; spec = spec, upper_bound = diagnostics)
     return diagnostics ? (sol.F, sol.diag) : sol.F
 end
@@ -1485,7 +1580,13 @@ function CFIM(
     guard = nothing,
     diagnostics = false,
 ) where {T<:Complex}
-    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard, work_type = eltype(real(ρ)))
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        work_type = eltype(real(ρ)),
+    )
     sol = _cfim_solve(ρ, [dρ], M; spec = spec, upper_bound = diagnostics)
     F = sol.F[1, 1]
     return diagnostics ? (F, sol.diag) : F
@@ -1508,7 +1609,13 @@ function CFIM(
     diagnostics = false,
 ) where {T<:Complex}
     M = M === nothing ? SIC(size(ρ)[1]) : M
-    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard, work_type = eltype(real(ρ)))
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        work_type = eltype(real(ρ)),
+    )
     sol = _cfim_solve(ρ, dρ, M; spec = spec, upper_bound = diagnostics)
     return diagnostics ? (sol.F, sol.diag) : sol.F
 end
@@ -1530,7 +1637,13 @@ function CFIM(
     diagnostics = false,
 ) where {T<:Complex}
     M = M === nothing ? SIC(size(ρ)[1]) : M
-    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard, work_type = eltype(real(ρ)))
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        work_type = eltype(real(ρ)),
+    )
     sol = _cfim_solve(ρ, [dρ], M; spec = spec, upper_bound = diagnostics)
     F = sol.F[1, 1]
     return diagnostics ? (F, sol.diag) : F
@@ -1643,11 +1756,36 @@ function QFIM(
     diagnostics = false,
 ) where {T<:Complex}
     if LDtype == :SLD
-        res = QFIM_SLD(ρ, dρ; eps = eps, tol = tol, input_error = input_error, guard = guard, refine = refine, diagnostics = diagnostics)
+        res = QFIM_SLD(
+            ρ,
+            dρ;
+            eps = eps,
+            tol = tol,
+            input_error = input_error,
+            guard = guard,
+            refine = refine,
+            diagnostics = diagnostics,
+        )
     elseif LDtype == :RLD
-        res = QFIM_RLD(ρ, dρ; eps = eps, tol = tol, input_error = input_error, guard = guard, diagnostics = diagnostics)
+        res = QFIM_RLD(
+            ρ,
+            dρ;
+            eps = eps,
+            tol = tol,
+            input_error = input_error,
+            guard = guard,
+            diagnostics = diagnostics,
+        )
     elseif LDtype == :LLD
-        res = QFIM_LLD(ρ, dρ; eps = eps, tol = tol, input_error = input_error, guard = guard, diagnostics = diagnostics)
+        res = QFIM_LLD(
+            ρ,
+            dρ;
+            eps = eps,
+            tol = tol,
+            input_error = input_error,
+            guard = guard,
+            diagnostics = diagnostics,
+        )
     else
         throw(ArgumentError("LDtype must be :SLD, :RLD, or :LLD"))
     end
@@ -1655,7 +1793,15 @@ function QFIM(
     diag = diagnostics ? res[2] : nothing
     if exportLD
         if LDtype == :SLD
-            LD = SLD(ρ, dρ; eps = eps, tol = tol, input_error = input_error, guard = guard, refine = refine)
+            LD = SLD(
+                ρ,
+                dρ;
+                eps = eps,
+                tol = tol,
+                input_error = input_error,
+                guard = guard,
+                refine = refine,
+            )
         elseif LDtype == :RLD
             LD = RLD(ρ, dρ; eps = eps, tol = tol, input_error = input_error, guard = guard)
         else
@@ -1695,11 +1841,36 @@ function QFIM(
     diagnostics = false,
 ) where {T<:Complex}
     if LDtype == :SLD
-        res = QFIM_SLD(ρ, dρ; eps = eps, tol = tol, input_error = input_error, guard = guard, refine = refine, diagnostics = diagnostics)
+        res = QFIM_SLD(
+            ρ,
+            dρ;
+            eps = eps,
+            tol = tol,
+            input_error = input_error,
+            guard = guard,
+            refine = refine,
+            diagnostics = diagnostics,
+        )
     elseif LDtype == :RLD
-        res = QFIM_RLD(ρ, dρ; eps = eps, tol = tol, input_error = input_error, guard = guard, diagnostics = diagnostics)
+        res = QFIM_RLD(
+            ρ,
+            dρ;
+            eps = eps,
+            tol = tol,
+            input_error = input_error,
+            guard = guard,
+            diagnostics = diagnostics,
+        )
     elseif LDtype == :LLD
-        res = QFIM_LLD(ρ, dρ; eps = eps, tol = tol, input_error = input_error, guard = guard, diagnostics = diagnostics)
+        res = QFIM_LLD(
+            ρ,
+            dρ;
+            eps = eps,
+            tol = tol,
+            input_error = input_error,
+            guard = guard,
+            diagnostics = diagnostics,
+        )
     else
         throw(ArgumentError("The LDtype should be chosen in {'SLD', 'RLD', 'LLD'}."))
     end
@@ -1707,7 +1878,15 @@ function QFIM(
     diag = diagnostics ? res[2] : nothing
     if exportLD
         if LDtype == :SLD
-            LD = SLD(ρ, dρ; eps = eps, tol = tol, input_error = input_error, guard = guard, refine = refine)
+            LD = SLD(
+                ρ,
+                dρ;
+                eps = eps,
+                tol = tol,
+                input_error = input_error,
+                guard = guard,
+                refine = refine,
+            )
         elseif LDtype == :RLD
             LD = RLD(ρ, dρ; eps = eps, tol = tol, input_error = input_error, guard = guard)
         else
@@ -1842,7 +2021,14 @@ function QFIM_Kraus(
     dK = [[dK[i][j] for i in eachindex(K)] for j = 1:para_num]
     ρ = [K * ρ0 * K' for K in K] |> sum
     dρ = [[dK * ρ0 * K' + K * ρ0 * dK' for (K, dK) in zip(K, dK)] |> sum for dK in dK]
-    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard, refine = refine, work_type = eltype(real(ρ)))
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        refine = refine,
+        work_type = eltype(real(ρ)),
+    )
     ρh, trace_correction, hermiticity_correction = hermitize_and_normalize(ρ; spec = spec)
     dρh = [Matrix(Hermitian((x + x') / 2)) for x in dρ]
     effective_input = max(input_error, trace_correction, hermiticity_correction)
@@ -1899,7 +2085,13 @@ function QFIM_Bloch(
 
     dim = Int(sqrt(length(r) + 1))
     Lambda = suN_generator(dim)
-    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard, work_type = eltype(r))
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        work_type = eltype(r),
+    )
     flags = Symbol[]
     branch = :mixed
     gap = -Inf
@@ -1947,8 +2139,8 @@ function QFIM_Bloch(
     else
         rho = (Matrix(I, dim, dim) + sqrt(dim * (dim - 1) / 2) * r' * Lambda) / dim
         G = zeros(ComplexF64, dim^2 - 1, dim^2 - 1)
-        for row_i = 1:dim^2-1
-            for col_j = row_i:dim^2-1
+        for row_i = 1:(dim^2-1)
+            for col_j = row_i:(dim^2-1)
                 anti_commu = Lambda[row_i] * Lambda[col_j] + Lambda[col_j] * Lambda[row_i]
                 G[row_i, col_j] = 0.5 * tr(rho * anti_commu)
                 G[col_j, row_i] = G[row_i, col_j]
@@ -2014,7 +2206,13 @@ function FIM(
     guard = nothing,
     diagnostics = false,
 ) where {R<:Real}
-    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard, work_type = eltype(p))
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        work_type = eltype(p),
+    )
     pmax = maximum(p)
     τp = probability_floor(spec, pmax)
     kept = [pi > τp for pi in p]
@@ -2056,7 +2254,13 @@ function FIM(
     guard = nothing,
     diagnostics = false,
 ) where {R<:Real}
-    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard, work_type = eltype(p))
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        work_type = eltype(p),
+    )
     pmax = maximum(p)
     τp = probability_floor(spec, pmax)
     para_num = length(dp[1])
@@ -2066,8 +2270,8 @@ function FIM(
     FIM_res = reduce(
         +,
         (
-            real.([dp[pj][a] * dp[pj][b] / p[pj] for a = 1:para_num, b = 1:para_num]) for
-            pj in eachindex(p) if kept[pj]
+            real.([dp[pj][a] * dp[pj][b] / p[pj] for a = 1:para_num, b = 1:para_num])
+            for pj in eachindex(p) if kept[pj]
         );
         init = zeros(para_num, para_num),
     )
@@ -2178,11 +2382,13 @@ function Williamson_form(A::AbstractMatrix)
     J = zeros(n, n) |> x -> [x one(x); -one(x) x]
     A_sqrt = sqrt(A)
     B = A_sqrt * J * A_sqrt
-    P = one(A) |> x -> [x[:, 1:2:2n-1] x[:, 2:2:2n]]
+    P = one(A) |> x -> [x[:, 1:2:(2n-1)] x[:, 2:2:2n]]
     t, Q, vals = schur(B)
-    c = sort(filter(x -> imag(x) > 0, vals); by=imag) .|> imag
-    D = c |> diagm |>complex |> x -> x^(-0.5)
-    S = (J * A_sqrt * Q * P * [zeros(n, n) -D; D zeros(n, n)] |> transpose |> inv) * transpose(P)
+    c = sort(filter(x -> imag(x) > 0, vals); by = imag) .|> imag
+    D = c |> diagm |> complex |> x -> x^(-0.5)
+    S =
+        (J * A_sqrt * Q * P * [zeros(n, n) -D; D zeros(n, n)] |> transpose |> inv) *
+        transpose(P)
     return S, c
 end
 
@@ -2302,14 +2508,15 @@ function QFIM_Gauss(R̄::V, dR̄::VV, D::M, dD::VM) where {V,VV,M,VM<:AbstractVe
     quad_num = length(R̄)
     C = [D[i, j] - R̄[i]R̄[j] for i = 1:quad_num, j = 1:quad_num]
     dC = [
-        [dD[k][i, j] - dR̄[k][i]R̄[j] - R̄[i]dR̄[k][j] for i = 1:quad_num, j = 1:quad_num] for k = 1:para_num
+        [dD[k][i, j] - dR̄[k][i]R̄[j] - R̄[i]dR̄[k][j] for i = 1:quad_num, j = 1:quad_num]
+        for k = 1:para_num
     ]
 
     S, cs = Williamson_form(C)
     Gs = G_Gauss(S, dC, cs)
     F = [
-        tr(Gs[i] * dC[j]) + transpose(dR̄[i]) * inv(C) * dR̄[j] for i = 1:para_num,
-        j = 1:para_num
+        tr(Gs[i] * dC[j]) + transpose(dR̄[i]) * inv(C) * dR̄[j] for
+        i = 1:para_num, j = 1:para_num
     ]
 
     if para_num == 1

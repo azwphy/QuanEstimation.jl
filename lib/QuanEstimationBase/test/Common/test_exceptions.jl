@@ -9,7 +9,7 @@ using QuanEstimationBase
     end
 
     @testset "BellState valid inputs" begin
-        for n in 1:4
+        for n = 1:4
             result = BellState(n)
             @test result isa Vector{ComplexF64}
             @test length(result) == 4
@@ -20,6 +20,11 @@ using QuanEstimationBase
         x = [[0.0]]
         func(x) = [1.0 0.0; 0.0 0.0]
         dfunc(x) = [[0.0 1.0; 1.0 0.0]]
-        @test_throws ArgumentError QuanEstimationBase.BayesInput(x, func, dfunc; channel="invalid")
+        @test_throws ArgumentError QuanEstimationBase.BayesInput(
+            x,
+            func,
+            dfunc;
+            channel = "invalid",
+        )
     end
 end
