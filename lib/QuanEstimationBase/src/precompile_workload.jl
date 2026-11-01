@@ -27,12 +27,7 @@ function _pcw_lindblad_scheme(; dyn_method = :Expm, measurement = nothing)
     ψ = PlusState()
     ρ = ψ * ψ'
     tspan = collect(range(0.0, 1.0; length = 6))
-    dynamics = Lindblad(
-        0.7 * σz() / 2,
-        [σz() / 2],
-        tspan;
-        dyn_method = dyn_method,
-    )
+    dynamics = Lindblad(0.7 * σz() / 2, [σz() / 2], tspan; dyn_method = dyn_method)
     return GeneralScheme(; probe = ρ, param = dynamics, measurement = measurement)
 end
 
@@ -60,11 +55,7 @@ function _pcw_ode()
     return QFIM(_pcw_lindblad_scheme(; dyn_method = :Ode))
 end
 
-function _pcw_optimize(
-    alg;
-    dyn_method = :Expm,
-    ctrl = [0.3 .* ones(10)],
-)
+function _pcw_optimize(alg; dyn_method = :Expm, ctrl = [0.3 .* ones(10)])
     tspan = collect(range(0.0, 1.0; length = 11))
     dynamics = Lindblad(
         0.5 * σz(),
@@ -78,25 +69,14 @@ function _pcw_optimize(
     scheme = GeneralScheme(; probe = PlusState(), param = dynamics)
     opt = ControlOpt(; ctrl = param_data(scheme).ctrl, ctrl_bound = [-5.0, 5.0], seed = 42)
     _pcw_silent() do
-        optimize!(
-            scheme,
-            opt;
-            algorithm = alg,
-            objective = QFIM_obj(),
-            savefile = false,
-        )
+        optimize!(scheme, opt; algorithm = alg, objective = QFIM_obj(), savefile = false)
     end
     return QFIM(scheme)
 end
 
 function _pcw_optimize_meas()
     scheme = _pcw_lindblad_scheme()
-    opt = MeasurementOpt(;
-        mtype = :LC,
-        POVM_basis = SIC(2),
-        M_num = 2,
-        seed = 42,
-    )
+    opt = MeasurementOpt(; mtype = :LC, POVM_basis = SIC(2), M_num = 2, seed = 42)
     _pcw_silent() do
         optimize!(
             scheme,
@@ -114,10 +94,11 @@ end
 
 function _pcw_mzi()
     N = 3
-    ψ = sum([
-        sin(k * pi / (N + 2)) * kron(basis(N + 1, k), basis(N + 1, N - k + 2)) for
-        k in 1:(N + 1)
-    ]) |> sparse
+    ψ =
+        sum([
+            sin(k * pi / (N + 2)) * kron(basis(N + 1, k), basis(N + 1, N - k + 2)) for
+            k = 1:(N+1)
+        ]) |> sparse
     ψ = ψ * sqrt(2 / (2 + N))
     ρ0 = ψ * ψ'
     x = collect(range(-pi, pi; length = 100))

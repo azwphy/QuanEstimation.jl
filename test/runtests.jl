@@ -10,9 +10,11 @@ using QuanEstimation
         # QuanEstimationBasePyExt extension for the Python bridge.
         # Julia 1.11 dependencies can leave a task behind during Aqua's
         # precompile probe; keep the check on 1.12 and 1.13.
-        Aqua.test_all(QuanEstimation;
+        Aqua.test_all(
+            QuanEstimation;
             stale_deps = (ignore = [:PythonCall],),
-            persistent_tasks = VERSION >= v"1.12")
+            persistent_tasks = VERSION >= v"1.12",
+        )
     end
 
     # --- Include sub-package tests ---

@@ -309,12 +309,7 @@ function Holevo_bound(
     input_error = 0.0,
     guard = nothing,
 )
-    spec = precision_spec(
-        eps;
-        input_error = input_error,
-        tol = tol,
-        guard = guard,
-    )
+    spec = precision_spec(eps; input_error = input_error, tol = tol, guard = guard)
     dim = size(ρ)[1]
     num = dim * dim
     para_num = length(dρ)

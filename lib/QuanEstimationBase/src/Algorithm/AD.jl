@@ -107,8 +107,17 @@ function update_state!(alg::AD_Adam, obj, scheme, δ)
     (; epsilon, beta1, beta2) = alg
     mt, vt = 0.0, 0.0
     for ti in eachindex(δ)
-        scheme.StatePreparation.data[ti], mt, vt =
-            Adam(δ[ti], ti, state_data(scheme)[ti], mt, vt, epsilon, beta1, beta2, _legacy_eps(obj))
+        scheme.StatePreparation.data[ti], mt, vt = Adam(
+            δ[ti],
+            ti,
+            state_data(scheme)[ti],
+            mt,
+            vt,
+            epsilon,
+            beta1,
+            beta2,
+            _legacy_eps(obj),
+        )
     end
 end
 
@@ -170,8 +179,17 @@ function update_M!(opt::Mopt_LinearComb, alg::AD_Adam, obj, δ)
     for ci in eachindex(δ)
         mt, vt = 0.0, 0.0
         for ti in eachindex(δ[1])
-            opt.B[ci][ti], mt, vt =
-                Adam(δ[ci][ti], ti, opt.B[ci][ti], mt, vt, epsilon, beta1, beta2, _legacy_eps(obj))
+            opt.B[ci][ti], mt, vt = Adam(
+                δ[ci][ti],
+                ti,
+                opt.B[ci][ti],
+                mt,
+                vt,
+                epsilon,
+                beta1,
+                beta2,
+                _legacy_eps(obj),
+            )
         end
     end
 end

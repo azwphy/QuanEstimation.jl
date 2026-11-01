@@ -34,13 +34,10 @@ abstract type LLDType <: AbstractLDtype end
 
 const PARA_TYPE_MAP = Dict{Symbol,Type{<:AbstractParaType}}(
     :single_para => single_para,
-    :multi_para  => multi_para,
+    :multi_para => multi_para,
 )
-const LD_TYPE_MAP = Dict{Symbol,Type{<:AbstractLDtype}}(
-    :SLD => SLDType,
-    :RLD => RLDType,
-    :LLD => LLDType,
-)
+const LD_TYPE_MAP =
+    Dict{Symbol,Type{<:AbstractLDtype}}(:SLD => SLDType, :RLD => RLDType, :LLD => LLDType)
 
 @doc raw"""
     QFIM_obj{P,D} <: AbstractObj
@@ -141,7 +138,7 @@ QFIM_obj(;
     eps = nothing,
     para_type::Symbol = :single_para,
     LDtype::Symbol = :SLD,
-) = QFIM_obj{PARA_TYPE_MAP[para_type], LD_TYPE_MAP[LDtype]}(isnothing(W) ? I : W, eps)
+) = QFIM_obj{PARA_TYPE_MAP[para_type],LD_TYPE_MAP[LDtype]}(isnothing(W) ? I : W, eps)
 
 @doc raw"""
 
@@ -172,7 +169,7 @@ HCRB_obj(; W = nothing, eps = nothing, para_type::Symbol = :single_para) =
 Positional-argument constructor for [`QFIM_obj`](@ref).
 """
 QFIM_obj(W, eps, para_type::Symbol, LDtype::Symbol) =
-    QFIM_obj{PARA_TYPE_MAP[para_type], LD_TYPE_MAP[LDtype]}(W, eps)
+    QFIM_obj{PARA_TYPE_MAP[para_type],LD_TYPE_MAP[LDtype]}(W, eps)
 
 """
     CFIM_obj(M, W, eps, para_type::Symbol)
@@ -202,8 +199,12 @@ QFIM_obj(W::AbstractMatrix, eps::Union{Number,Nothing}, para_type::String, LDtyp
 
 String-input convenience constructor for [`CFIM_obj`](@ref).
 """
-CFIM_obj(M::AbstractVecOrMat, W::AbstractMatrix, eps::Union{Number,Nothing}, para_type::String) =
-    CFIM_obj(M, W, eps, Symbol(para_type))
+CFIM_obj(
+    M::AbstractVecOrMat,
+    W::AbstractMatrix,
+    eps::Union{Number,Nothing},
+    para_type::String,
+) = CFIM_obj(M, W, eps, Symbol(para_type))
 
 """
     HCRB_obj(W, eps, para_type::String)

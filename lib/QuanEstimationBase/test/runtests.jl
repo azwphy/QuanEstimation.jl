@@ -8,8 +8,7 @@ using SparseArrays
 @testset verbose = true "Aqua" begin
     # Julia 1.11 dependencies can leave a task behind during Aqua's
     # precompile probe; keep the check on 1.12 and 1.13.
-    Aqua.test_all(QuanEstimationBase;
-        persistent_tasks = VERSION >= v"1.12")
+    Aqua.test_all(QuanEstimationBase; persistent_tasks = VERSION >= v"1.12")
 end
 
 include("utils.jl")

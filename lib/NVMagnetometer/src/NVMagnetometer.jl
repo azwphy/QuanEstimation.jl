@@ -89,9 +89,9 @@ struct NVMagnetometerData
     decay_opt::Vector{Matrix{ComplexF64}}##decay_operator
     init_state::Vector{ComplexF64}##ρ0
     Hc::Vector{Matrix{ComplexF64}} ##control_Hamiltonians
-    ctrl::Union{Nothing, Vector{Vector{Float64}}} ##control_coefficients
-    tspan::Union{Vector{Float64}, StepRangeLen} ##time_span
-    M::Union{Nothing, Vector{Matrix{ComplexF64}}} ##meassurments
+    ctrl::Union{Nothing,Vector{Vector{Float64}}} ##control_coefficients
+    tspan::Union{Vector{Float64},StepRangeLen} ##time_span
+    M::Union{Nothing,Vector{Matrix{ComplexF64}}} ##meassurments
 end
 
 # Base.keys(t::NVMagnetometer{names...}) where {names...} = [names...]
@@ -299,7 +299,7 @@ Compute the Holevo Cramér-Rao bound for an NV magnetometer scheme.
 """
 QuanEstimationBase.HCRB(nv::NVMagnetometerScheme; kwargs...) =
     HCRB(getscheme(nv); kwargs...)
-    
+
 """
     QuanEstimationBase.optimize!(nv::NVMagnetometerScheme, opt; algorithm, objective, savefile)
 
@@ -313,7 +313,13 @@ function QuanEstimationBase.optimize!(
     objective = QFIM_obj(),
     savefile = false,
 )
-    QuanEstimationBase.optimize!(getscheme(nv.data), opt; algorithm = algorithm, objective = objective, savefile = savefile)
+    QuanEstimationBase.optimize!(
+        getscheme(nv.data),
+        opt;
+        algorithm = algorithm,
+        objective = objective,
+        savefile = savefile,
+    )
 end
 
 

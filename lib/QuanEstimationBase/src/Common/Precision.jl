@@ -470,13 +470,18 @@ function guarded_pinv(
     smin = minimum(abs.(vals[kept]))
     # truncated spectral inverse (functional form, AD friendly)
     inv_vals = [(abs(v) > τ ? inv(v) : zero(v)) for v in vals]
-    Finv = Hermitian((e.vectors * Diagonal(inv_vals) * e.vectors' + (e.vectors * Diagonal(inv_vals) * e.vectors')') / 2)
+    Finv = Hermitian(
+        (
+            e.vectors * Diagonal(inv_vals) * e.vectors' +
+            (e.vectors * Diagonal(inv_vals) * e.vectors')'
+        ) / 2,
+    )
     null_projection = 0.0
     if W !== nothing
         Wm = Matrix(W)
         for (k, v) in enumerate(eachcol(e.vectors))
             if abs(vals[k]) <= τ
-                wv = (v' * Wm * v)[1]
+                wv = (v'*Wm*v)[1]
                 null_projection += abs(wv)
             end
         end
@@ -501,7 +506,11 @@ end
 Evaluate ``\\mathrm{Tr}(W F^{+})`` with the guarded pseudo-inverse.
 Returns `(value, diag)`.
 """
-function guarded_objective(F::AbstractMatrix, W; spec::PrecisionSpec = PrecisionSpec(Float64))
+function guarded_objective(
+    F::AbstractMatrix,
+    W;
+    spec::PrecisionSpec = PrecisionSpec(Float64),
+)
     Fpinv, nrank, smin, smax, null_projection =
         guarded_pinv(F; spec = spec, W = W, label = "F")
     value = real(tr(Matrix(W) * Fpinv))
@@ -534,7 +543,10 @@ the Hermitian part of `ρ` rescaled to unit trace when the deviation is
 above the floor.  The corrections are reported as norms so that they
 can be booked as input-data error.
 """
-function hermitize_and_normalize(ρ::AbstractMatrix; spec::PrecisionSpec = PrecisionSpec(Float64))
+function hermitize_and_normalize(
+    ρ::AbstractMatrix;
+    spec::PrecisionSpec = PrecisionSpec(Float64),
+)
     h_err = opnorm(ρ - ρ')
     ρh = Hermitian((ρ + ρ') / 2) |> Matrix
     tr_val = real(tr(ρh))

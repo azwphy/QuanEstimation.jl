@@ -42,9 +42,11 @@ function Bayes(x, p, rho, y; M = nothing, estimator = "mean", savefile = false)
                     append!(x_out, x[1][indx])
                 end
             else
-                throw(ArgumentError(
-                    "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.",
-                ))
+                throw(
+                    ArgumentError(
+                        "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.",
+                    ),
+                )
             end
 
             jldopen("bayes.dat", "w") do f
@@ -83,9 +85,11 @@ function Bayes(x, p, rho, y; M = nothing, estimator = "mean", savefile = false)
                     append!(x_out, x[1][indx])
                 end
             else
-                throw(ArgumentError(
-                    "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.",
-                ))
+                throw(
+                    ArgumentError(
+                        "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.",
+                    ),
+                )
             end
 
             jldopen("bayes.dat", "w") do f
@@ -131,9 +135,11 @@ function Bayes(x, p, rho, y; M = nothing, estimator = "mean", savefile = false)
                     append!(x_out, [[x[i][indx[i]] for i = 1:para_num]])
                 end
             else
-                throw(ArgumentError(
-                    "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.",
-                ))
+                throw(
+                    ArgumentError(
+                        "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.",
+                    ),
+                )
             end
 
             jldopen("bayes.dat", "w") do f
@@ -174,9 +180,11 @@ function Bayes(x, p, rho, y; M = nothing, estimator = "mean", savefile = false)
                     append!(x_out, [[x[i][indx[i]] for i = 1:para_num]])
                 end
             else
-                throw(ArgumentError(
-                    "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.",
-                ))
+                throw(
+                    ArgumentError(
+                        "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.",
+                    ),
+                )
             end
 
             jldopen("bayes.dat", "w") do f
@@ -284,7 +292,7 @@ function MLE(x, rho, y; M = nothing, savefile = false)
                 f["L"] = [L_out]
                 f["x"] = x_out
             end
-            
+
             # Save results to CSV
             # df = DataFrame(L = [L_out], x = x_out)
             # CSV.write("MLE.csv", df)
@@ -353,7 +361,7 @@ function integ(x, p)
     for i = 1:para_num
         p_tp = p
         if i == para_num
-            for si = 1:para_num-1
+            for si = 1:(para_num-1)
                 p_tp = trapz(x[si], p_tp, Val(1))
             end
 
@@ -363,7 +371,7 @@ function integ(x, p)
             end
         else
             p_tp = trapz(x[end], p_tp)
-            for si = 1:para_num-1
+            for si = 1:(para_num-1)
                 p_tp = trapz(x[si], p_tp, Val(1))
             end
         end
@@ -467,7 +475,7 @@ function _second_difference_error(x::AbstractVector, y::AbstractVector)
     n < 3 && return 0.0
     h = (x[end] - x[1]) / (n - 1)
     s = 0.0
-    @inbounds for i = 2:n-1
+    @inbounds for i = 2:(n-1)
         s += abs(y[i-1] - 2 * y[i] + y[i+1])
     end
     return h^2 / 12 * s
@@ -542,8 +550,7 @@ function _integration_diagnostics(
         upper_bound = sld_diag.upper_bound,
         deleted_mass = deleted_mass,
         flags = flags,
-        bottleneck = classify_bottleneck(
-            ;
+        bottleneck = classify_bottleneck(;
             forward_error_bound = sld_diag.forward_error_bound,
             input_error_propagation = sld_diag.input_error_propagation,
             truncation_bias_bound = truncation_bias,
@@ -584,8 +591,7 @@ function _merge_diagnostics(quantity::Symbol, diags::AbstractVector{<:NumericalD
         upper_bound = maximum(d.upper_bound for d in diags),
         deleted_mass = sum(d.deleted_mass for d in diags),
         flags = flags,
-        bottleneck = classify_bottleneck(
-            ;
+        bottleneck = classify_bottleneck(;
             forward_error_bound = fwd,
             input_error_propagation = inp,
             truncation_bias_bound = trc,
@@ -746,9 +752,12 @@ function BCB(
             term_tp .* reshape([x_re[i][para_i] for i = 1:p_num], size(p)) for
             para_i = 1:para_num
         ]
-        err_pri = diagnostics ? maximum(
-            _integration_error_matrix(x, integrands, para_num^2) for integrands in pri_integrands
-        ) : 0.0
+        err_pri =
+            diagnostics ?
+            maximum(
+                _integration_error_matrix(x, integrands, para_num^2) for
+                integrands in pri_integrands
+            ) : 0.0
         rho_pri = [
             trapzm(x, integrands, para_num^2) |> I -> reshape(I, para_num, para_num) for
             integrands in pri_integrands

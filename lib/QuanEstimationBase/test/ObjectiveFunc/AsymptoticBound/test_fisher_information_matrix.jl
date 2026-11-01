@@ -24,7 +24,7 @@ M = [M1, M2]
 # time length for the evolution
 tspan = range(0.0, 50.0, length = 200)
 # dynamics
-rho, drho = expm(tspan, rho0, H0, dH;decay=decay)
+rho, drho = expm(tspan, rho0, H0, dH; decay = decay)
 # calculation of the CFI and QFI
 Im, F = Matrix{Float64}[], Matrix{Float64}[]
 for ti in eachindex(tspan)
@@ -38,40 +38,40 @@ end
 
 
 @testset "CFIM/QFIM trajectory properties" begin
-@test tr(Im[1]) ≈ 0
-@test tr(F[1]) ≈ 0
-# positivity
-@test all(x -> real(tr(x)) >= (0), Im[1])
-@test all(x -> real(tr(x)) >= (0), F[1])
+    @test tr(Im[1]) ≈ 0
+    @test tr(F[1]) ≈ 0
+    # positivity
+    @test all(x -> real(tr(x)) >= (0), Im[1])
+    @test all(x -> real(tr(x)) >= (0), F[1])
 
-# Properties of the QFIM & CFIM
-# real symmetric
-@test issymmetric(F[end])
-@test issymmetric(Im[end])
+    # Properties of the QFIM & CFIM
+    # real symmetric
+    @test issymmetric(F[end])
+    @test issymmetric(Im[end])
 
-# positive semi-definite
-@test F[end] |> x -> round.(x; digits = 5) |> isposdef
-@test Im[end] |> x -> round.(x; digits = 5) |> isposdef
+    # positive semi-definite
+    @test F[end] |> x -> round.(x; digits = 5) |> isposdef
+    @test Im[end] |> x -> round.(x; digits = 5) |> isposdef
 
-# parameter-independent unitary operation invariant
-U = exp(im * pi / 8 * sx)
-ρ_0 = rho[end]
-ρ_1 = U * ρ_0 * U'
-@test QFIM(ρ_1, [U * dr * U' for dr in drho[end]]) ≈ F[end]
+    # parameter-independent unitary operation invariant
+    U = exp(im * pi / 8 * sx)
+    ρ_0 = rho[end]
+    ρ_1 = U * ρ_0 * U'
+    @test QFIM(ρ_1, [U * dr * U' for dr in drho[end]]) ≈ F[end]
 
-# convexity
-p = 0.3
-@test (QFIM(
-    p * ρ_0 + (1 - p) * ρ_1,
-    [p * dr + (1 - p) * U * dr * U' for dr in drho[end]],
-)) |> x -> tr(x) >= 0
+    # convexity
+    p = 0.3
+    @test (QFIM(
+        p * ρ_0 + (1 - p) * ρ_1,
+        [p * dr + (1 - p) * U * dr * U' for dr in drho[end]],
+    )) |> x -> tr(x) >= 0
 end
 
 # ============ Plan-2 bug-specific tests ============
 
 # Bug #38: Hermiticity enforcement
 @testset "#38 Hermiticity enforcement" begin
-    for _ in 1:10
+    for _ = 1:10
         N = rand(2:4)
         ρ = rand_ρ(N)
         ∂ρ = rand_∂ρ(N)
@@ -79,19 +79,19 @@ end
         A_anti = A - A'
         ε = rand() * 1e-12
         ρ_pert = ρ + ε * A_anti
-        F = QFIM(ρ_pert, [∂ρ]; LDtype=:SLD)
-        @test abs(imag(F[1,1])) < 1e-12
+        F = QFIM(ρ_pert, [∂ρ]; LDtype = :SLD)
+        @test abs(imag(F[1, 1])) < 1e-12
     end
 end
 
 # Bug #39: SLD Hermiticity
 @testset "#39 SLD Hermiticity" begin
-    for _ in 1:10
+    for _ = 1:10
         N = rand(2:4)
         ρ = rand_ρ(N)
         ∂ρ = rand_∂ρ(N)
-        L_orig = SLD(ρ, ∂ρ; rep="original")
-        L_eig = SLD(ρ, ∂ρ; rep="eigen")
+        L_orig = SLD(ρ, ∂ρ; rep = "original")
+        L_eig = SLD(ρ, ∂ρ; rep = "eigen")
         @test norm(L_orig - L_orig') < 5e-13
         @test norm(L_eig - L_eig') < 5e-13
     end
@@ -103,7 +103,7 @@ end
     ρ = rand_ρ(N)
     dρ = [rand_∂ρ(N), rand_∂ρ(N), rand_∂ρ(N)]
     for LDtype in [:SLD, :RLD, :LLD]
-        F = QFIM(ρ, dρ; LDtype=LDtype)
+        F = QFIM(ρ, dρ; LDtype = LDtype)
         @test size(F) == (3, 3)
     end
     ρ_pure = rand_ρ(N)
@@ -116,7 +116,7 @@ end
 @testset "#10 Williamson eigenvalue sorting" begin
     c_single = QuanEstimationBase.Williamson_form(Matrix{Float64}(I, 2, 2) * 3.0)[2]
     @test length(c_single) == 1
-    @test isapprox(c_single[1], 3.0, rtol=1e-10)
+    @test isapprox(c_single[1], 3.0, rtol = 1e-10)
 end
 
 # Bug #56: Near-zero eigenvalue truncation
@@ -125,7 +125,7 @@ end
     rho_sing = (rho_sing + rho_sing') / 2
     rho_sing ./= tr(rho_sing)
     drho_sing = ComplexF64[0.0 0.0; 0.0 0.0]
-    F = QFIM(rho_sing, [drho_sing]; LDtype=:SLD)
+    F = QFIM(rho_sing, [drho_sing]; LDtype = :SLD)
     @test all(isfinite, F)
     @test !any(isnan, F)
 end

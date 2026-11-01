@@ -3,13 +3,7 @@ using LinearAlgebra
 using Random
 using Trapz: trapz
 
-using QuanEstimationBase:
-    BCB,
-    SIC,
-    SigmaX, SigmaY, SigmaZ,
-    expm,
-    Bayes,
-    MLE
+using QuanEstimationBase: BCB, SIC, SigmaX, SigmaY, SigmaZ, expm, Bayes, MLE
 
 
 function test_bayes()
@@ -44,7 +38,7 @@ function test_bayes()
     isfile("bayes.dat") && rm("bayes.dat")
     isfile("bayes.csv") && rm("bayes.csv")
     isfile("MLE.dat") && rm("MLE.dat")
-    isfile("MLE.csv") && rm("MLE.csv")    
+    isfile("MLE.csv") && rm("MLE.csv")
 
     # Bug #56: Near-zero eigenvalue truncation in BayesEstimation
     @testset "#56 Near-zero eigenvalue truncation" begin
@@ -53,10 +47,20 @@ function test_bayes()
         rho_sing ./= tr(rho_sing)
         M_sic = SIC(2)
         y_test = [rand() >= 0.5 ? 0 : 1 for _ = 1:10]
-        pout_test, xout_test = Bayes([x], p, [rho_sing for _ in x], y_test; M = M_sic, estimator = "MAP", savefile = false)
+        pout_test, xout_test = Bayes(
+            [x],
+            p,
+            [rho_sing for _ in x],
+            y_test;
+            M = M_sic,
+            estimator = "MAP",
+            savefile = false,
+        )
         @test all(isfinite, pout_test)
         @test !any(isnan, pout_test)
     end
 end
 
-@testset "Bayesian estimation" begin test_bayes() end
+@testset "Bayesian estimation" begin
+    test_bayes()
+end
